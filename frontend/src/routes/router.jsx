@@ -8,6 +8,8 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import DashboardLayout from "../layouts/DashboardLayout";
 import DashboardHomePage from "../pages/DashboardHomePage";
+import AboutPage from "../pages/AboutPage";
+import ContactPage from "../pages/ContactPage";
 
 export const router = createBrowserRouter([
   {
@@ -25,6 +27,14 @@ export const router = createBrowserRouter([
         {
             path: "product-details/:id",
             Component: ProductDetailsPage
+        },
+        {
+            path: "about-us",
+            Component: AboutPage
+        },
+        {
+            path: "contact",
+            Component: ContactPage
         }
     ]
   },
