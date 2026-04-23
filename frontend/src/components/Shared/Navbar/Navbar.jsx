@@ -3,14 +3,6 @@ import { Menu, ShoppingCart, X } from 'lucide-react';
 import { Link } from 'react-router';
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
@@ -33,8 +25,8 @@ const Navbar = () => {
     href: "/contact",
     text: "Contact"
   }];
-  return <header className={`w-full transition-all duration-300 ${isScrolled ? 'bg-white/95 backdrop-blur-lg shadow-lg' : 'bg-white/90 backdrop-blur-md shadow-lg'} border-b border-gray-200`}>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 max-w-11/12">
+  return <header className={`fixed top-0 left-0 w-full transition-all duration-300 backdrop-blur-md z-50`}>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
         <div className="flex h-14 sm:h-16 lg:h-20 items-center justify-between">
           {}
           <div className="flex items-center">
