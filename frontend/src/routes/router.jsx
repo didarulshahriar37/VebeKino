@@ -1,6 +1,13 @@
 import { createBrowserRouter } from "react-router";
 import RootLayout from "../layouts/RootLayout";
 import LandingPage from "../pages/LandingPage";
+import ProductsPage from "../pages/ProductsPage";
+import ProductDetailsPage from "../pages/ProductDetailsPage";
+import AuthLayout from "../layouts/AuthLayout";
+import LoginPage from "../pages/LoginPage";
+import RegisterPage from "../pages/RegisterPage";
+import DashboardLayout from "../layouts/DashboardLayout";
+import DashboardHomePage from "../pages/DashboardHomePage";
 
 export const router = createBrowserRouter([
   {
@@ -10,7 +17,40 @@ export const router = createBrowserRouter([
         {
             index: true,
             Component: LandingPage
+        },
+        {
+            path: "all-products",
+            Component: ProductsPage
+        },
+        {
+            path: "product-details/:id",
+            Component: ProductDetailsPage
         }
     ]
   },
+  {
+    path: "/auth",
+    Component: AuthLayout,
+    children: [
+        {
+            path: "login",
+            Component: LoginPage
+        },
+        {
+            path: "register",
+            Component: RegisterPage
+        }
+    ]
+  },
+  {
+    path: "/dashboard",
+    Component: DashboardLayout,
+    children: [
+        {
+            index: true,
+            path: "/dashboard",
+            Component: DashboardHomePage
+        }
+    ]
+  }
 ]);
