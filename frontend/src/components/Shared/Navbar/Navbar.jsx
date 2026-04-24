@@ -58,7 +58,7 @@ const Navbar = () => {
             <Link to={"/auth/login"} className="flex items-center space-x-1.5 lg:space-x-2 px-3 lg:px-4 py-1.5 lg:py-2 text-xs lg:text-sm font-medium text-gray-800 border border-[#2fe0cb] rounded-md hover:bg-gray-100 transition-all hover:shadow-md">
               <span className='font-semibold'>Sign in</span>
             </Link>
-            <Link to={"/auth/register"} className="px-4 lg:px-6 py-1.5 lg:py-2 text-xs lg:text-sm font-medium bg-gradient-to-r from-[#2fe0cb] to-[#1c8079] text-black font-semibold rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow-lg transform hover:scale-105">
+            <Link to={"/auth/register"} className="px-4 lg:px-6 py-1.5 lg:py-2 text-xs lg:text-sm bg-gradient-to-r from-[#2fe0cb] to-[#1c8079] text-black font-semibold rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow-lg transform hover:scale-105">
               Sign up
             </Link>
             <Link to={"/"}><ShoppingCart /></Link>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 
 // Brand colors matching VebeKino homepage
 const C = {
@@ -104,7 +104,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ fontFamily: "'DM Sans', 'Segoe UI', sans-serif" }}>
+    <div className="min-h-screen flex">
       {/* Left decorative panel */}
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12"
@@ -148,7 +148,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Center content */}
-        <div className="relative z-10">
+        <div className="relative z-10 flex-1 flex flex-col justify-center">
           <p className="text-xs tracking-[0.25em] uppercase mb-4 font-medium" style={{ color: C.primaryDark }}>
             Join Us
           </p>
@@ -162,27 +162,6 @@ export default function RegisterPage() {
           <p className="text-base leading-relaxed" style={{ color: C.textMuted, maxWidth: "300px" }}>
             Create your account and start making every purchase count — thoughtful, intentional, meaningful.
           </p>
-        </div>
-
-        {/* Perks */}
-        <div className="relative z-10 space-y-3">
-          {[
-            "Free shipping on orders over $150",
-            "Exclusive member-only collections",
-            "Early access to new arrivals",
-          ].map((perk) => (
-            <div key={perk} className="flex items-center gap-3">
-              <div
-                className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: "rgba(28,128,121,0.18)" }}
-              >
-                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                  <path d="M1 4L3.5 6.5L9 1" stroke={C.primary} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium" style={{ color: C.text }}>{perk}</p>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -206,7 +185,7 @@ export default function RegisterPage() {
             </h1>
             <p className="text-sm" style={{ color: C.textMuted }}>
               Already have an account?{" "}
-              <Link to="/login" className="font-semibold underline underline-offset-2" style={{ color: C.primary }}>
+              <Link to="/auth/login" className="font-semibold underline underline-offset-2" style={{ color: C.primary }}>
                 Login here
               </Link>
             </p>
@@ -389,14 +368,6 @@ export default function RegisterPage() {
               )}
             </button>
           </form>
-
-          {/* Terms */}
-          <p className="text-center text-xs mt-6" style={{ color: C.textMuted }}>
-            By creating an account, you agree to our{" "}
-            <Link to="/terms" className="underline underline-offset-2 font-medium" style={{ color: C.primary }}>Terms of Service</Link>
-            {" "}and{" "}
-            <Link to="/privacy" className="underline underline-offset-2 font-medium" style={{ color: C.primary }}>Privacy Policy</Link>
-          </p>
         </div>
       </div>
     </div>

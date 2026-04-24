@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 
 // Brand colors matching VebeKino homepage
 const C = {
@@ -61,7 +61,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ fontFamily: "'DM Sans', 'Segoe UI', sans-serif" }}>
+    <div className="min-h-screen flex">
       {/* Left decorative panel */}
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12"
@@ -105,7 +105,7 @@ export default function LoginPage() {
         </div>
 
         {/* Center content */}
-        <div className="relative z-10">
+        <div className="relative z-10 flex-1 flex flex-col justify-center">
           <p className="text-xs tracking-[0.25em] uppercase mb-4 font-medium" style={{ color: C.primaryDark }}>
             Welcome Back
           </p>
@@ -119,20 +119,6 @@ export default function LoginPage() {
           <p className="text-base leading-relaxed" style={{ color: C.textMuted, maxWidth: "300px" }}>
             Because not everything you want, you need. Sign in and make every purchase mean something.
           </p>
-        </div>
-
-        {/* Stats */}
-        <div className="relative z-10 flex gap-10">
-          {[
-            { label: "Happy Users", value: "50K+" },
-            { label: "Products", value: "500+" },
-            { label: "Rating", value: "4.9★" },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <p className="text-2xl font-bold" style={{ color: C.primary }}>{stat.value}</p>
-              <p className="text-xs tracking-widest uppercase mt-0.5" style={{ color: C.textMuted }}>{stat.label}</p>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -156,7 +142,7 @@ export default function LoginPage() {
             </h1>
             <p className="text-sm" style={{ color: C.textMuted }}>
               Don't have an account?{" "}
-              <Link to="/register" className="font-semibold underline underline-offset-2" style={{ color: C.primary }}>
+              <Link to="/auth/register" className="font-semibold underline underline-offset-2" style={{ color: C.primary }}>
                 Register here
               </Link>
             </p>
@@ -308,8 +294,8 @@ export default function LoginPage() {
           </div>
 
           {/* Social */}
-          <div className="grid grid-cols-2 gap-3">
-            {["Continue with Google", "Continue with Apple"].map((label) => (
+          <div className="grid grid-cols-1 gap-3">
+            {["Continue with Google"].map((label) => (
               <button
                 key={label}
                 type="button"
@@ -331,14 +317,6 @@ export default function LoginPage() {
               </button>
             ))}
           </div>
-
-          {/* Footer */}
-          <p className="text-center text-xs mt-8" style={{ color: C.textMuted }}>
-            By signing in, you agree to our{" "}
-            <Link to="/terms" className="underline underline-offset-2 font-medium" style={{ color: C.primary }}>Terms</Link>
-            {" "}&{" "}
-            <Link to="/privacy" className="underline underline-offset-2 font-medium" style={{ color: C.primary }}>Privacy Policy</Link>
-          </p>
         </div>
       </div>
     </div>
