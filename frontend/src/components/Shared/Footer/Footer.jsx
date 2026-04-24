@@ -59,7 +59,7 @@ function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col items-center relative z-10">
         <div className="mb-6 flex items-center justify-center">
           <span className="text-gray-900 text-3xl font-extrabold tracking-wide">
-            ProjectName
+            VebeKino
           </span>
         </div>
 
@@ -80,7 +80,7 @@ function Footer() {
         </div>
 
         <p className="text-center text-xs text-gray-500 mt-4">
-          &copy; {new Date().getFullYear()} projectName. All rights reserved.
+          &copy; {new Date().getFullYear()} VebeKino. All rights reserved.
         </p>
       </div>
     </footer>;

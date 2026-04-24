@@ -31,7 +31,7 @@ const Navbar = () => {
           {}
           <div className="flex items-center">
             <a href="/" className="flex items-center space-x-2 group">
-              <span className="font-bold text-lg sm:text-xl lg:text-2xl text-gray-900">ProjectName</span>
+              <span className="font-bold text-lg sm:text-xl lg:text-2xl text-gray-900">VebeKino</span>
             </a>
           </div>
 
