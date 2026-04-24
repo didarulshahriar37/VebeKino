@@ -1,4 +1,4 @@
-function Footer() {
+﻿function Footer() {
   const navLinks = [{
     name: "Features",
     href: "#"
@@ -55,34 +55,109 @@ function Footer() {
           <path fill="currentColor" d="M16.6 5.82s.51.5 0 0A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64c0 3.33 2.76 5.7 5.69 5.7c3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48"></path>
         </svg>
   }];
-  return <footer className="py-10 px-4 sm:px-6 lg:px-8 font-inter relative overflow-hidden ">
+
+  return (
+    <footer className="relative overflow-hidden bg-[#1c8079]/30 py-12 px-4 sm:px-6 lg:px-8 font-inter">
+
+      {/* SVG Decoration Layer */}
+      <svg
+        className="absolute inset-0 w-full h-full"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid slice"
+        viewBox="0 0 1440 300"
+      >
+        <defs>
+          <radialGradient id="fg-orb1" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#1c8079" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#1c8079" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="fg-orb2" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#2fe0cb" stopOpacity="0.32" />
+            <stop offset="100%" stopColor="#2fe0cb" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        <path
+          d="M0,60 C240,0 480,100 720,50 C960,0 1200,80 1440,40 L1440,0 L0,0 Z"
+          fill="#1c8079" fillOpacity="0.08"
+        />
+        <path
+          d="M0,90 C300,20 600,120 900,70 C1150,25 1320,90 1440,65 L1440,0 L0,0 Z"
+          fill="#2fe0cb" fillOpacity="0.05"
+        />
+
+        <path
+          d="M0,240 C360,200 720,270 1080,230 C1260,210 1380,250 1440,240 L1440,300 L0,300 Z"
+          fill="#1c8079" fillOpacity="0.06"
+        />
+
+        <ellipse cx="100"  cy="60"  rx="200" ry="160" fill="url(#fg-orb1)" />
+        <ellipse cx="1350" cy="250" rx="220" ry="180" fill="url(#fg-orb2)" />
+        <ellipse cx="720"  cy="290" rx="180" ry="120" fill="url(#fg-orb1)" />
+
+        <circle cx="60"   cy="270" r="100" fill="none" stroke="#1c8079" strokeWidth="1"   strokeOpacity="0.12" />
+        <circle cx="60"   cy="270" r="70"  fill="none" stroke="#2fe0cb" strokeWidth="0.8" strokeOpacity="0.08" />
+        <circle cx="1390" cy="40"  r="120" fill="none" stroke="#1c8079" strokeWidth="1"   strokeOpacity="0.1"  />
+        <circle cx="1390" cy="40"  r="80"  fill="none" stroke="#2fe0cb" strokeWidth="0.8" strokeOpacity="0.07" />
+
+        <circle cx="200"  cy="30"  r="4" fill="#1c8079" fillOpacity="0.25" />
+        <circle cx="480"  cy="15"  r="3" fill="#2fe0cb" fillOpacity="0.3"  />
+        <circle cx="960"  cy="25"  r="3" fill="#1c8079" fillOpacity="0.22" />
+        <circle cx="1240" cy="10"  r="4" fill="#2fe0cb" fillOpacity="0.2"  />
+        <circle cx="380"  cy="260" r="5" fill="#23a898" fillOpacity="0.2"  />
+        <circle cx="1060" cy="275" r="4" fill="#1c8079" fillOpacity="0.18" />
+
+        <line x1="0"    y1="300" x2="300"  y2="100" stroke="#1c8079" strokeWidth="0.8" strokeOpacity="0.07" />
+        <line x1="1440" y1="0"   x2="1100" y2="200" stroke="#2fe0cb" strokeWidth="0.8" strokeOpacity="0.07" />
+      </svg>
+
+      {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto flex flex-col items-center relative z-10">
+
         <div className="mb-6 flex items-center justify-center">
-          <span className="text-gray-900 text-3xl font-extrabold tracking-wide">
-            VebeKino
+          <span className="text-3xl font-extrabold tracking-wide">
+            <span>Vebe</span>
+            <span className="text-[#1c8079]">Kino</span>
           </span>
         </div>
 
         <nav className="mb-6 w-full">
           <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-base font-medium">
-            {navLinks.map(link => <li key={link.name}>
-                <a href={link.href} className="text-gray-600 hover:text-gray-900 transition-all duration-300 relative after:absolute after:left-0 after:bottom-0 after:h-0.5 after:w-0 after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full">
+            {navLinks.map(link => (
+              <li key={link.name}>
+                <a
+                  href={link.href}
+                  className="text-black hover:text-[#1c8079] transition-all duration-300 relative after:absolute after:left-0 after:bottom-0 after:h-0.5 after:w-0 after:bg-[#1c8079] after:transition-all after:duration-300 hover:after:w-full"
+                >
                   {link.name}
                 </a>
-              </li>)}
+              </li>
+            ))}
           </ul>
         </nav>
 
-        <div className="my-6 flex flex-wrap justify-center gap-4 text-sm">
-          {socialIcons.map(icon => <a key={icon.name} target="_blank" rel="noopener noreferrer" aria-label={icon.name} className="text-gray-600 hover:text-gray-900 transition-colors duration-300" href={icon.href}>
+        <div className="w-24 h-px bg-gradient-to-r from-transparent via-[#1c8079]/60 to-transparent mb-6" />
+
+        <div className="my-2 flex flex-wrap justify-center gap-4">
+          {socialIcons.map(icon => (
+            <a
+              key={icon.name}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={icon.name}
+              className="text-black hover:text-[#1c8079] transition-colors duration-300"
+              href={icon.href}
+            >
               {icon.svg}
-            </a>)}
+            </a>
+          ))}
         </div>
 
-        <p className="text-center text-xs text-gray-500 mt-4">
+        <p className="text-center text-xs text-black mt-6">
           &copy; {new Date().getFullYear()} VebeKino. All rights reserved.
         </p>
       </div>
-    </footer>;
+    </footer>
+  );
 }
 export default Footer;
