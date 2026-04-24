@@ -1,5 +1,5 @@
 ﻿import { Link } from "react-router";
-import placeholder from "../../assets/Placeholder.jpg"
+import bannerImage from "../../assets/BannerImage.png"
 import { ArrowRight } from "lucide-react";
 
 const Banner = () => {
@@ -87,7 +87,7 @@ const Banner = () => {
                     <p className="text-2xl md:text-7xl font-bold">Think<br />
                         <span className="text-[#1c8079]">Wait...</span><br />
                         Earn it</p>
-                    <div className="text-lg md:text-xl">
+                    <div className="text-lg md:text-2xl">
                         Because not everything you want, you need. Make every purchase mean something.
                     </div>
                     <Link to={"all-products"} className="bg-gradient-to-r from-[#2fe0cb] to-[#1c8079] text-black font-semibold px-6 py-4 border-2 hover:border-black hover:scale-110 transition-all duration-300 ease-in-out flex items-center rounded-lg w-fit">
@@ -96,7 +96,7 @@ const Banner = () => {
 
                 </div>
                 <div className="h-full overflow-hidden flex items-center">
-                    <img src={placeholder} className="max-h-[90%] w-auto object-contain rounded-xl" alt="" />
+                    <img src={bannerImage} className="max-h-[90%] w-auto object-contain shadow-md rounded-xl" alt="" />
                 </div>
             </div>
         </div>
