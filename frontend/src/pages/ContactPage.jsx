@@ -1,8 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, Clock, ArrowRight, CheckCircle } from "lucide-react";
-// import { FaTwitter, FaInstagram, FaLinkedin, FaFacebook, FaThread } from 'react-icons/fa'; // Import icons
-
+import { Mail, Phone, Clock, ArrowRight, CheckCircle } from "lucide-react";
 
 const C = {
   primary: "#1c8079",
@@ -19,64 +16,23 @@ const C = {
   white: "#ffffff",
 };
 
-const VectorBg = () => (
-  <svg
-    className="absolute inset-0 w-full h-full"
-    xmlns="http://www.w3.org/2000/svg"
-    preserveAspectRatio="xMidYMid slice"
-    viewBox="0 0 800 900"
-  >
-    <defs>
-      <radialGradient id="cOrb1" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="#1c8079" stopOpacity="0.25" />
-        <stop offset="100%" stopColor="#1c8079" stopOpacity="0" />
-      </radialGradient>
-      <radialGradient id="cOrb2" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="#2fe0cb" stopOpacity="0.3" />
-        <stop offset="100%" stopColor="#2fe0cb" stopOpacity="0" />
-      </radialGradient>
-    </defs>
-    <ellipse cx="100" cy="150" rx="300" ry="250" fill="url(#cOrb1)" />
-    <ellipse cx="700" cy="750" rx="350" ry="280" fill="url(#cOrb2)" />
-    <path d="M0,300 C160,240 320,360 480,280 C640,200 740,300 800,260 L800,0 L0,0 Z" fill="#1c8079" fillOpacity="0.07" />
-    <path d="M0,600 C200,540 400,660 600,580 C720,530 780,580 800,560 L800,900 L0,900 Z" fill="#2fe0cb" fillOpacity="0.08" />
-    <circle cx="60" cy="780" r="120" fill="none" stroke="#1c8079" strokeWidth="1.5" strokeOpacity="0.2" />
-    <circle cx="740" cy="100" r="140" fill="none" stroke="#2fe0cb" strokeWidth="1" strokeOpacity="0.18" />
-    <circle cx="60" cy="200" r="12" fill="#1c8079" fillOpacity="0.2" />
-    <circle cx="300" cy="80" r="7" fill="#2fe0cb" fillOpacity="0.3" />
-    <circle cx="750" cy="400" r="14" fill="#2fe0cb" fillOpacity="0.2" />
-    {[...Array(6)].map((_, col) =>
-      [...Array(8)].map((_, row) => (
-        <circle key={`${col}-${row}`} cx={60 + col * 120} cy={60 + row * 110} r="2" fill="#1c8079" fillOpacity="0.1" />
-      ))
-    )}
-  </svg>
-);
-
 const contactInfo = [
   {
     icon: <Mail size={20} />,
     label: "Email Us",
-    value: "hello@vebekino.com",
+    value: "customer.service@vebekino.com",
     sub: "We reply within 24 hours",
   },
   {
     icon: <Phone size={20} />,
     label: "Call Us",
-    value: "+1 (555) 012-3456",
+    value: "+880 1234-567890",
     sub: "Mon – Fri, 9 AM – 6 PM EST",
   },
-  // {
-  //   icon: <MapPin size={20} />,
-  //   label: "Our Office",
-  //   value: "42 Mindful Lane, Suite 7",
-  //   sub: "San Francisco, CA 94103",
-  // },
   {
     icon: <Clock size={20} />,
     label: "Support Hours",
-    value: "Mon – Fri: 9 AM – 6 PM",
-    sub: "Sat: 10 AM – 2 PM EST",
+    value: "Time: 9 AM – 10 PM"
   },
 ];
 

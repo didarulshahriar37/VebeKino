@@ -1,71 +1,54 @@
-const express    = require('express');
-const router     = express.Router();
-const supabase   = require('../db');
-const checkLock  = require('../middleware/checkLock');
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
+const AdminConfig = require('../models/AdminConfig');
 
-// Default lock duration if admin config is missing
-const DEFAULT_LOCK_HOURS = 2;
-
-// POST /verify-otp
-// Middleware chain: checkLock runs first, then this handler
-router.post('/', checkLock, async (req, res) => {
+router.post('/', async (req, res) => {
   const { email, otp } = req.body;
+  if (!email || !otp) return res.status(400).json({ error: 'Email and OTP required' });
 
-  if (!email || !otp) {
-    return res.status(400).json({ error: 'Email and OTP required' });
-  }
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-  // 1. Fetch user + admin lock config in parallel
-  const [userRes, configRes] = await Promise.all([
-    supabase.from('users')
-      .select('otp, otp_expiry, is_verified')
-      .eq('email', email).single(),
-    supabase.from('admin_config')
-      .select('value')
-      .eq('key', 'lock_hours').single()
-  ]);
+    // Check lock
+    if (user.is_locked && new Date() < user.lock_until) {
+      return res.status(403).json({ error: 'Account locked', locked_until: user.lock_until });
+    }
 
-  const user = userRes.data;
-  const lockHours = configRes.data
-    ? parseInt(configRes.data.value)
-    : DEFAULT_LOCK_HOURS;
+    // Check expiry
+    if (new Date() > user.otp_expiry) {
+      return res.status(400).json({ error: 'OTP expired' });
+    }
 
-  if (!user) return res.status(404).json({ error: 'User not found' });
+    if (otp !== user.otp) {
+      // Handle wrong OTP (locking logic)
+      const config = await AdminConfig.findOne({ key: 'lock_hours' });
+      const lockHours = config ? parseInt(config.value) : 2;
+      user.is_locked = true;
+      user.lock_until = new Date(Date.now() + lockHours * 60 * 60 * 1000);
+      await user.save();
+      return res.status(401).json({ error: 'Invalid OTP', locked_until: user.lock_until });
+    }
 
-  // 2. Check if OTP has expired (5-minute window)
-  if (new Date() > new Date(user.otp_expiry)) {
-    return res.status(400).json({ error: 'OTP expired. Please request a new one.' });
-  }
+    // Success
+    user.is_verified = true;
+    user.is_locked = false;
+    user.lock_until = null;
+    user.otp = null;
+    user.otp_expiry = null;
+    console.log(`VERIFYING user ${email}. Current password length: ${user.password ? user.password.length : 'MISSING'}`);
+    await user.save();
 
-  // 3. Compare the submitted OTP with the stored one
-  if (otp !== user.otp) {
-    // Wrong OTP → lock the account
-    const lock_until = new Date(
-      Date.now() + lockHours * 60 * 60 * 1000 // lockHours in ms
-    ).toISOString();
-
-    await supabase.from('users').update({
-      is_locked: true,
-      lock_until
-    }).eq('email', email);
-
-    return res.status(401).json({
-      error: 'Wrong OTP',
-      locked_until: lock_until,
-      message: `Account locked for ${lockHours} hour(s)`
+    res.json({
+      message: 'Verified successfully',
+      email: user.email,
+      role: user.role,
+      name: user.name || user.email.split('@')[0]
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-
-  // 4. Correct OTP → mark user as verified, clear the OTP
-  await supabase.from('users').update({
-    is_verified: true,
-    is_locked: false,
-    lock_until: null,
-    otp: null,        // clear so it can't be reused
-    otp_expiry: null
-  }).eq('email', email);
-
-  res.json({ message: 'Verified successfully! Proceed to next step.', email });
 });
 
 module.exports = router;
