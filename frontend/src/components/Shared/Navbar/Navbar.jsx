@@ -73,7 +73,7 @@ const Navbar = () => {
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50">
                     <Link
-                      to={user.role === 'admin' ? "/admin/dashboard" : "/user/dashboard"}
+                      to={"/dashboard"}
                       onClick={() => setIsUserMenuOpen(false)}
                       className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
@@ -137,7 +137,7 @@ const Navbar = () => {
                 {user ? (
                   <>
                     <Link
-                      to={user.role === 'admin' ? "/admin/dashboard" : "/user/dashboard"}
+                      to={"/dashboard"}
                       onClick={() => setIsMenuOpen(false)}
                       className="flex items-center justify-center space-x-2 px-3 py-2.5 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
                     >

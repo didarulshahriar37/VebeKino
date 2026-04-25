@@ -176,7 +176,7 @@ export default function LoginPage() {
 
       setGeneralSuccess("Verified successfully! Signing you in...");
       login({ email: data.email, role: data.role, name: data.name });
-      navigate(data.role === "admin" ? "/admin/dashboard" : "/user/dashboard");
+      navigate("/dashboard");
     } catch (err) {
       setGeneralError(err.message);
     } finally {
