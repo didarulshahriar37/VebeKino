@@ -14,6 +14,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import SEO from "../components/Shared/SEO";
+import API_BASE_URL from "../api/config";
 import {
   Users,
   Package,
@@ -177,7 +178,7 @@ const AdminDashboardContent = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3000/admin/stats')
+    fetch(`${API_BASE_URL}/admin/stats`)
       .then(res => res.json())
       .then(data => {
         setStats(data);
@@ -402,13 +403,13 @@ const UserDashboardContent = () => {
   useEffect(() => {
     if (user?.email) {
       // Fetch queue count
-      fetch(`http://localhost:3000/queue/${user.email}`)
+      fetch(`${API_BASE_URL}/queue/${user.email}`)
         .then(res => res.json())
         .then(data => setQueueCount(data.length))
         .catch(err => console.error("Error fetching queue count:", err));
 
       // Fetch recent orders
-      fetch(`http://localhost:3000/orders/user/${user.email}`)
+      fetch(`${API_BASE_URL}/orders/user/${user.email}`)
         .then(res => res.json())
         .then(data => setRecentOrders(data.slice(0, 4))) // Only last 4
         .catch(err => console.error("Error fetching recent orders:", err));

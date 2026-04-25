@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { ArrowLeft } from "lucide-react";
 import SEO from "../components/Shared/SEO";
+import API_BASE_URL from "../api/config";
 
 // Brand colors matching VebeKino homepage
 const C = {
@@ -66,7 +67,7 @@ export default function LoginPage() {
 
     const checkLock = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/status?email=${formData.email}`);
+        const res = await fetch(`${API_BASE_URL}/status?email=${formData.email}`);
         const data = await res.json();
         if (data.is_locked) {
           setIsBackendLocked(true);
@@ -127,7 +128,7 @@ export default function LoginPage() {
       setErrors({});
       setGeneralError("");
       try {
-        const res = await fetch("http://localhost:3000/login", {
+        const res = await fetch(`${API_BASE_URL}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: formData.email, password: formData.password }),
@@ -162,7 +163,7 @@ export default function LoginPage() {
     setErrors({});
     setGeneralError("");
     try {
-      const res = await fetch("http://localhost:3000/verify-otp", {
+      const res = await fetch(`${API_BASE_URL}/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email, otp: formData.otp }),

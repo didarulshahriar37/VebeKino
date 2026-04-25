@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
+import API_BASE_URL from "../api/config";
 import { ArrowLeft, CheckCircle, ShieldAlert, Loader2 } from "lucide-react";
 import { Link } from "react-router";
 
@@ -25,7 +26,7 @@ const ReviewPage = () => {
   const scrollContainerRef = useRef(null);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/queue/item/${id}`)
+    fetch(`${API_BASE_URL}/queue/item/${id}`)
       .then(res => res.json())
       .then(data => {
         setItem(data);
@@ -50,7 +51,7 @@ const ReviewPage = () => {
   const handleConfirm = async () => {
     setIsSubmitting(true);
     try {
-      const res = await fetch(`http://localhost:3000/queue/${id}/pass-gate-2`, {
+      const res = await fetch(`${API_BASE_URL}/queue/${id}/pass-gate-2`, {
         method: 'PUT'
       });
       if (res.ok) {

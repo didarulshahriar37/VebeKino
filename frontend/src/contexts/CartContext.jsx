@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
+import API_BASE_URL from "../api/config";
 
 const CartContext = createContext();
 
@@ -12,7 +13,7 @@ export const CartProvider = ({ children }) => {
   // Load cart from DB when user changes
   useEffect(() => {
     if (user && user.email) {
-      fetch(`http://localhost:3000/cart/${user.email}`)
+      fetch(`${API_BASE_URL}/cart/${user.email}`)
         .then((res) => res.json())
         .then((data) => setCartItems(data || []))
         .catch((err) => console.error("Error loading cart:", err));
@@ -24,7 +25,7 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (product, quantity = 1) => {
     if (!user) return;
     try {
-      const res = await fetch("http://localhost:3000/cart", {
+      const res = await fetch(`${API_BASE_URL}/cart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userEmail: user.email, product, quantity }),
@@ -39,7 +40,7 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = async (productId) => {
     if (!user) return;
     try {
-      const res = await fetch(`http://localhost:3000/cart/${user.email}/${productId}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${user.email}/${productId}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -56,7 +57,7 @@ export const CartProvider = ({ children }) => {
       return;
     }
     try {
-      const res = await fetch("http://localhost:3000/cart", {
+      const res = await fetch(`${API_BASE_URL}/cart`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userEmail: user.email, productId, quantity }),
@@ -71,7 +72,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     if (!user) return;
     try {
-      await fetch(`http://localhost:3000/cart/${user.email}`, {
+      await fetch(`${API_BASE_URL}/cart/${user.email}`, {
         method: "DELETE",
       });
       setCartItems([]);

@@ -10,7 +10,8 @@
  *  - Fully mock data — swap the `mockUsers` array + handlers with real API calls
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import API_BASE_URL from "../api/config";
 import {
   Search,
   Trash2,
@@ -124,7 +125,7 @@ export default function UserManagementPage() {
 
   const fetchUsers = () => {
     setLoading(true);
-    fetch('http://localhost:3000/admin/users')
+    fetch(`${API_BASE_URL}/admin/users`)
       .then(res => res.json())
       .then(data => {
         setUsers(data);
@@ -152,7 +153,7 @@ export default function UserManagementPage() {
 
   // ── toggle role
   const handleToggleRole = (email) => {
-    fetch(`http://localhost:3000/admin/toggle-role/${email}`, { method: 'POST' })
+    fetch(`${API_BASE_URL}/admin/toggle-role/${email}`, { method: 'POST' })
       .then(res => res.json())
       .then(updatedUser => {
         setUsers(prev => prev.map(u => u.email === email ? updatedUser : u));
@@ -163,7 +164,7 @@ export default function UserManagementPage() {
 
   // ── delete
   const handleDelete = () => {
-    fetch(`http://localhost:3000/admin/delete-user/${toDelete.email}`, { method: 'DELETE' })
+    fetch(`${API_BASE_URL}/admin/delete-user/${toDelete.email}`, { method: 'DELETE' })
       .then(() => {
         showToast(`${toDelete.name} has been removed.`, "danger");
         setUsers((prev) => prev.filter((u) => u.email !== toDelete.email));

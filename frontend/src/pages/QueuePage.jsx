@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import API_BASE_URL from "../api/config";
 import { Clock, Lock, CheckCircle2, ArrowRight, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 
@@ -160,7 +161,7 @@ const QueuePage = () => {
     let interval;
     if (user) {
       const fetchQueue = () => {
-        fetch(`http://localhost:3000/queue/${user.email}`)
+        fetch(`${API_BASE_URL}/queue/${user.email}`)
           .then((res) => res.json())
           .then((data) => setQueueItems(data))
           .catch((err) => console.error(err))
@@ -176,7 +177,7 @@ const QueuePage = () => {
 
   const handleRemoveItem = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/queue/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/queue/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setQueueItems(prev => prev.filter(item => item._id !== id));
       }
@@ -272,13 +273,13 @@ const QueuePage = () => {
                         </div>
                         <button 
                           onClick={async () => {
-                            await fetch('http://localhost:3000/queue/batch-pass-gate-2', {
+                            await fetch(`${API_BASE_URL}/queue/batch-pass-gate-2`, {
                               method: 'PUT',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ userEmail: user.email })
                             });
                             // Force fetch
-                            fetch(`http://localhost:3000/queue/${user.email}`)
+                            fetch(`${API_BASE_URL}/queue/${user.email}`)
                               .then(res => res.json())
                               .then(data => setQueueItems(data));
                           }}
@@ -291,7 +292,7 @@ const QueuePage = () => {
                   }
                 } else if (gate3Items.length > 0) {
                   return <GlobalSocialBlock gate3Items={gate3Items} userEmail={user.email} onUpdate={() => {
-                    fetch(`http://localhost:3000/queue/${user.email}`)
+                    fetch(`${API_BASE_URL}/queue/${user.email}`)
                       .then((res) => res.json())
                       .then((data) => setQueueItems(data));
                   }} />;
@@ -355,7 +356,7 @@ const GlobalSocialBlock = ({ gate3Items, userEmail, onUpdate }) => {
 
   const handleShare = async () => {
     try {
-      const res = await fetch('http://localhost:3000/queue/share', {
+      const res = await fetch(`${API_BASE_URL}/queue/share`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userEmail })

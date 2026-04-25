@@ -10,7 +10,7 @@
  *  - Empty state
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search,
   ChevronDown,
@@ -24,6 +24,8 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import API_BASE_URL from "../api/config";
 
 const C = {
   primary:      "#1c8079",
@@ -43,9 +45,6 @@ const statusConfig = {
   Pending:    { color: "#9ca3af", bg: "rgba(156,163,175,0.1)", icon: Circle,      label: "Pending"    },
   Cancelled:  { color: "#e05a5a", bg: "rgba(224,90,90,0.08)",  icon: Circle,      label: "Cancelled"  },
 };
-
-import { useAuth } from "../contexts/AuthContext";
-import { useEffect } from "react";
 
 const STATUS_TABS = ["All", "Delivered", "Processing", "Shipped", "Pending", "Cancelled"];
 
@@ -171,7 +170,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (user?.email) {
-      fetch(`http://localhost:3000/orders/user/${user.email}`)
+      fetch(`${API_BASE_URL}/orders/user/${user.email}`)
         .then(res => res.json())
         .then(data => {
           setOrders(data);

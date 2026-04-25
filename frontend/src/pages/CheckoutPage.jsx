@@ -4,6 +4,7 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Loader2, CreditCard, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import API_BASE_URL from '../api/config';
 
 // Replace with your publishable key from Stripe Dashboard
 const stripePromise = loadStripe('pk_test_51SWKQfBDrJk4FICQz5nSoDl0BwaYbcou9UWud7xLX5JPNRZzQBiqoLaq2evLsvRqm0terCoP7402AbNpLH0b0KxB004pqXsNEy');
@@ -19,7 +20,7 @@ const CheckoutForm = ({ amount, items }) => {
 
   useEffect(() => {
     // Create PaymentIntent as soon as the page loads
-    fetch('http://localhost:3000/payment/create-payment-intent', {
+    fetch(`${API_BASE_URL}/payment/create-payment-intent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount, email: user?.email }),
@@ -51,7 +52,7 @@ const CheckoutForm = ({ amount, items }) => {
       setProcessing(false);
 
       // Create Order in database
-      await fetch('http://localhost:3000/orders/create', {
+      await fetch(`${API_BASE_URL}/orders/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -69,7 +70,7 @@ const CheckoutForm = ({ amount, items }) => {
       });
 
       // Clear queue on success
-      await fetch(`http://localhost:3000/queue/clear/${user.email}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/queue/clear/${user.email}`, { method: 'DELETE' });
       navigate('/success');
     }
   };

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router";
+import { useParams, Link, useNavigate } from "react-router";
+import API_BASE_URL from "../api/config";
 import { ArrowLeft, Loader2, PenTool, CheckCircle } from "lucide-react";
 
 const C = {
@@ -23,7 +24,7 @@ const JustifyPage = () => {
   const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/queue/item/${id}`)
+    fetch(`${API_BASE_URL}/queue/item/${id}`)
       .then(res => res.json())
       .then(data => {
         setItem(data);
@@ -43,7 +44,7 @@ const JustifyPage = () => {
     setFeedback(null);
 
     try {
-      const res = await fetch(`http://localhost:3000/queue/${id}/justify`, {
+      const res = await fetch(`${API_BASE_URL}/queue/${id}/justify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ justification })

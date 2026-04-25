@@ -13,6 +13,7 @@
 import { useState, useEffect } from "react";
 import { User, Mail, Shield, Save, CheckCircle, Pencil, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import API_BASE_URL from "../api/config";
 
 const C = {
   primary:      "#1c8079",
@@ -72,13 +73,13 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user?.email) {
       // Fetch orders count
-      fetch(`http://localhost:3000/orders/user/${user.email}`)
+      fetch(`${API_BASE_URL}/orders/user/${user.email}`)
         .then(res => res.json())
         .then(data => setOrderCount(data.length))
         .catch(err => console.error("Error fetching order count:", err));
 
       // Fetch queue count
-      fetch(`http://localhost:3000/queue/${user.email}`)
+      fetch(`${API_BASE_URL}/queue/${user.email}`)
         .then(res => res.json())
         .then(data => setQueueCount(data.length))
         .catch(err => console.error("Error fetching queue count:", err));

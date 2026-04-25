@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import SEO from "../components/Shared/SEO";
+import API_BASE_URL from "../api/config";
 import { 
   Search, 
   Filter, 
@@ -39,7 +40,7 @@ const ProductsPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("http://localhost:3000/products/all");
+        const res = await fetch(`${API_BASE_URL}/products/all`);
         const data = await res.json();
         setProducts(data);
       } catch (err) {

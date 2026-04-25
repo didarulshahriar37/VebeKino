@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
+import API_BASE_URL from "../api/config";
 import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag, Loader2 } from "lucide-react";
 import { useState } from "react";
 
@@ -24,7 +25,7 @@ const CartPage = () => {
     if (!user) return;
     setIsProcessing(true);
     try {
-      const res = await fetch("http://localhost:3000/queue/move-from-cart", {
+      const res = await fetch(`${API_BASE_URL}/queue/move-from-cart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userEmail: user.email })

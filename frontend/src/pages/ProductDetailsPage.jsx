@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import SEO from "../components/Shared/SEO";
+import API_BASE_URL from "../api/config";
 import { 
   Star, 
   ShoppingCart, 
@@ -40,7 +41,7 @@ const ProductDetailsPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/products/${id}`);
+        const res = await fetch(`${API_BASE_URL}/products/${id}`);
         const data = await res.json();
         setProduct(data);
       } catch (err) {

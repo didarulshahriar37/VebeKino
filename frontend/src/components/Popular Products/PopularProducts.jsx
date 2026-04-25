@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
+import API_BASE_URL from "../../api/config";
 import { ShoppingCart, Star, ArrowRight, Loader2 } from "lucide-react";
 
 const C = {
@@ -20,7 +21,7 @@ const PopularProducts = () => {
   useEffect(() => {
     const fetchPopular = async () => {
       try {
-        const res = await fetch("http://localhost:3000/products/popular");
+        const res = await fetch(`${API_BASE_URL}/products/popular`);
         const data = await res.json();
         setProducts(data);
       } catch (err) {
