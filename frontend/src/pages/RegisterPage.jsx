@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
+import { useAuth } from "../contexts/AuthContext";
+import { ArrowLeft } from "lucide-react";
 
 // Brand colors matching VebeKino homepage
 const C = {
@@ -20,30 +22,94 @@ const C = {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
+    otp: "",
   });
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState("");
+  const [generalSuccess, setGeneralSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [receivedOtp, setReceivedOtp] = useState(""); // For "captcha" style display
+  const [lockUntil, setLockUntil] = useState(null);
+  const [lockedEmail, setLockedEmail] = useState(""); // Track WHICH email is locked
+  const [countdown, setCountdown] = useState("");
+  const [isBackendLocked, setIsBackendLocked] = useState(false); // New state for live check
 
-  const validate = () => {
+  const isCurrentEmailLocked = (lockedEmail && formData.email === lockedEmail && lockUntil && new Date() < new Date(lockUntil)) || isBackendLocked;
+
+  // Countdown timer for locked accounts
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (lockUntil) {
+        const remaining = new Date(lockUntil) - new Date();
+        if (remaining <= 0) {
+          setLockUntil(null);
+          setGeneralError("");
+        } else {
+          const h = Math.floor(remaining / 3600000);
+          const m = Math.floor((remaining % 3600000) / 60000);
+          const s = Math.floor((remaining % 60000) / 1000);
+          setCountdown(`${h}h ${m}m ${s}s`);
+        }
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockUntil]);
+
+  // Live Backend Check (Debounced)
+  useEffect(() => {
+    if (!formData.email || !formData.email.includes("@")) {
+      setIsBackendLocked(false);
+      return;
+    }
+
+    const checkLock = async () => {
+      try {
+        const res = await fetch(`http://localhost:3000/status?email=${formData.email}`);
+        const data = await res.json();
+        if (data.is_locked) {
+          setIsBackendLocked(true);
+          setLockUntil(data.lock_until);
+          setLockedEmail(data.email);
+        } else {
+          setIsBackendLocked(false);
+        }
+      } catch (err) {
+        console.error("Status check failed", err);
+      }
+    };
+
+    const timeout = setTimeout(checkLock, 500); // 500ms debounce
+    return () => clearTimeout(timeout);
+  }, [formData.email]);
+
+  const validateEmailStep = () => {
     const newErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.fullName.trim()) newErrors.fullName = "Full name is required.";
-    else if (formData.fullName.trim().length < 2) newErrors.fullName = "Name must be at least 2 characters.";
     if (!formData.email.trim()) newErrors.email = "Email is required.";
     else if (!emailRegex.test(formData.email)) newErrors.email = "Please enter a valid email address.";
+    
     if (!formData.password) newErrors.password = "Password is required.";
-    else if (formData.password.length < 8) newErrors.password = "Password must be at least 8 characters.";
-    if (!formData.confirmPassword) newErrors.confirmPassword = "Please confirm your password.";
-    else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match.";
+    else if (formData.password.length < 6) newErrors.password = "Password must be at least 6 characters.";
+    
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match.";
+    }
+    return newErrors;
+  };
+
+  const validateOtpStep = () => {
+    const newErrors = {};
+    if (!formData.otp.trim() || formData.otp.length !== 6) newErrors.otp = "Please enter a valid 6-digit OTP.";
     return newErrors;
   };
 
@@ -52,35 +118,83 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
     setGeneralError("");
+    setGeneralSuccess("");
   };
 
-  const handleSubmit = async (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
-    const validationErrors = validate();
+    const validationErrors = validateEmailStep();
     if (Object.keys(validationErrors).length > 0) { setErrors(validationErrors); return; }
     setIsLoading(true);
     setErrors({});
     setGeneralError("");
     try {
-      await new Promise((res) => setTimeout(res, 1000));
-      navigate("/dashboard");
+      const res = await fetch("http://localhost:3000/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          email: formData.email, 
+          password: formData.password,
+          name: formData.fullName
+        }),
+      });
+      const data = await res.json();
+      if (res.status === 403) {
+        setLockUntil(data.locked_until);
+        setLockedEmail(formData.email);
+        setGeneralError(`Account locked. Please wait ${countdown || "a few hours"}.`);
+        return; // CRITICAL: Stop here, do not setStep(2)
+      }
+      if (!res.ok) throw new Error(data.error || "Failed to send OTP");
+      setReceivedOtp(data.otp); // Capture OTP to display on screen
+      setGeneralSuccess("OTP generated successfully!");
+      setStep(2);
     } catch (err) {
-      setGeneralError(err.message || "Registration failed. Please try again.");
+      setGeneralError(err.message || "Failed to connect to the server.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getPasswordStrength = (pwd) => {
-    if (!pwd) return null;
-    if (pwd.length < 8) return { level: 1, label: "Weak", color: "#d94f3d" };
-    if (pwd.length < 12 && !/[!@#$%^&*]/.test(pwd)) return { level: 2, label: "Fair", color: "#e8a860" };
-    if (/[A-Z]/.test(pwd) && /[0-9]/.test(pwd) && /[!@#$%^&*]/.test(pwd))
-      return { level: 4, label: "Strong", color: C.primaryLight };
-    return { level: 3, label: "Good", color: C.primary };
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    const validationErrors = validateOtpStep();
+    if (Object.keys(validationErrors).length > 0) { setErrors(validationErrors); return; }
+    setIsLoading(true);
+    setErrors({});
+    setGeneralError("");
+    try {
+      const res = await fetch("http://localhost:3000/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, otp: formData.otp }),
+      });
+      const data = await res.json();
+      if (res.status === 403) {
+        setLockUntil(data.locked_until);
+        setLockedEmail(formData.email);
+        throw new Error(`Verification failed. Account locked for ${countdown || "a few hours"}`);
+      }
+      if (!res.ok) throw new Error(data.error || "Failed to verify OTP");
+      
+      login({ email: data.email, role: data.role, name: formData.fullName || data.name });
+      navigate(data.role === "admin" ? "/admin/dashboard" : "/user/dashboard");
+    } catch (err) {
+      setGeneralError(err.message || "Verification failed.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const strength = getPasswordStrength(formData.password);
+  const handleBack = () => {
+    if (step === 2) {
+      setStep(1);
+      setGeneralSuccess("");
+      setGeneralError("");
+    } else {
+      navigate(-1);
+    }
+  };
 
   const inputStyle = (fieldName) => ({
     borderColor: errors[fieldName] ? C.errorRed : C.border,
@@ -168,6 +282,18 @@ export default function RegisterPage() {
       {/* Right form panel */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12" style={{ backgroundColor: C.white }}>
         <div className="w-full max-w-md">
+          {/* Back Button */}
+          <button 
+            onClick={handleBack}
+            className="group flex items-center gap-2 mb-8 text-xs font-bold uppercase tracking-widest transition-all duration-300"
+            style={{ color: C.textMuted }}
+            onMouseEnter={(e) => e.currentTarget.style.color = C.primary}
+            onMouseLeave={(e) => e.currentTarget.style.color = C.textMuted}
+          >
+            <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
+            <span>{step === 2 ? "Back to registration" : "Back"}</span>
+          </button>
+
           {/* Mobile brand */}
           <div className="lg:hidden mb-8 text-center">
             <Link to="/" className="text-2xl font-bold" style={{ color: C.text }}>
@@ -200,152 +326,183 @@ export default function RegisterPage() {
               {generalError}
             </div>
           )}
+          {generalSuccess && (
+            <div
+              className="mb-5 px-4 py-3 rounded-lg text-sm border"
+              style={{ backgroundColor: "#f0fdf4", borderColor: "#bbf7d0", color: C.successGreen }}
+            >
+              {generalSuccess}
+            </div>
+          )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} noValidate className="space-y-4">
-            {/* Full Name */}
-            <div>
-              <label htmlFor="fullName" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
-                Full Name
-              </label>
-              <input
-                id="fullName"
-                name="fullName"
-                type="text"
-                autoComplete="name"
-                value={formData.fullName}
-                onChange={handleChange}
-                placeholder="Your full name"
-                className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all duration-200"
-                style={inputStyle("fullName")}
-                onFocus={handleFocus}
-                onBlur={(e) => handleBlur(e, "fullName")}
-              />
-              {errors.fullName && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.fullName}</p>}
-            </div>
-
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
-                Email Address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="your@email.com"
-                className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all duration-200"
-                style={inputStyle("email")}
-                onFocus={handleFocus}
-                onBlur={(e) => handleBlur(e, "email")}
-              />
-              {errors.email && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.email}</p>}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Minimum 8 characters"
-                  className="w-full px-4 py-3 pr-14 rounded-xl border text-sm outline-none transition-all duration-200"
-                  style={inputStyle("password")}
-                  onFocus={handleFocus}
-                  onBlur={(e) => handleBlur(e, "password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs tracking-widest uppercase font-semibold"
-                  style={{ color: C.primary }}
-                  tabIndex={-1}
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-              {/* Strength bar */}
-              {formData.password && strength && (
-                <div className="mt-2">
-                  <div className="flex gap-1 mb-1">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div
-                        key={i}
-                        className="h-1 flex-1 rounded-full transition-all duration-300"
-                        style={{ backgroundColor: i <= strength.level ? strength.color : "#d0eeec" }}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs font-medium" style={{ color: strength.color }}>{strength.label} password</p>
+          <form onSubmit={step === 1 ? handleSendOtp : handleVerifyOtp} noValidate className="space-y-4">
+            {step === 1 ? (
+              <>
+                {/* Full Name */}
+                <div>
+                  <label htmlFor="fullName" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
+                    Full Name
+                  </label>
+                  <input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    autoComplete="name"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    placeholder="Your full name"
+                    className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all duration-200"
+                    style={inputStyle("fullName")}
+                    onFocus={handleFocus}
+                    onBlur={(e) => handleBlur(e, "fullName")}
+                  />
+                  {errors.fullName && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.fullName}</p>}
                 </div>
-              )}
-              {errors.password && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.password}</p>}
-            </div>
 
-            {/* Confirm Password */}
-            <div>
-              <label htmlFor="confirmPassword" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirm ? "text" : "password"}
-                  autoComplete="new-password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Re-enter your password"
-                  className="w-full px-4 py-3 pr-14 rounded-xl border text-sm outline-none transition-all duration-200"
-                  style={inputStyle("confirmPassword")}
-                  onFocus={handleFocus}
-                  onBlur={(e) => handleBlur(e, "confirmPassword")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm((prev) => !prev)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs tracking-widest uppercase font-semibold"
-                  style={{ color: C.primary }}
-                  tabIndex={-1}
+                {/* Email */}
+                <div>
+                  <label htmlFor="email" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
+                    Email Address
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="your@email.com"
+                    className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all duration-200"
+                    style={inputStyle("email")}
+                    onFocus={handleFocus}
+                    onBlur={(e) => handleBlur(e, "email")}
+                  />
+                  {errors.email && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.email}</p>}
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label htmlFor="password" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
+                    Create Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="At least 6 characters"
+                      className="w-full px-4 py-3 pr-14 rounded-xl border text-sm outline-none transition-all duration-200"
+                      style={inputStyle("password")}
+                      onFocus={handleFocus}
+                      onBlur={(e) => handleBlur(e, "password")}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest"
+                      style={{ color: C.primary }}
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  {errors.password && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.password}</p>}
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Repeat password"
+                    className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all duration-200"
+                    style={inputStyle("confirmPassword")}
+                    onFocus={handleFocus}
+                    onBlur={(e) => handleBlur(e, "confirmPassword")}
+                  />
+                  {errors.confirmPassword && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.confirmPassword}</p>}
+                </div>
+              </>
+            ) : (
+              <div className="space-y-6">
+                {/* OTP Captcha Display */}
+                <div 
+                  className="p-6 rounded-2xl border-2 border-dashed text-center relative overflow-hidden"
+                  style={{ backgroundColor: C.bg, borderColor: C.border }}
                 >
-                  {showConfirm ? "Hide" : "Show"}
-                </button>
+                  <div className="relative z-10">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-2" style={{ color: C.primary }}>
+                      Verification Code
+                    </p>
+                    <div className="flex items-center justify-center gap-3">
+                      {receivedOtp.split("").map((digit, i) => (
+                        <span 
+                          key={i} 
+                          className="text-3xl font-black italic tracking-tighter"
+                          style={{ 
+                            color: C.text,
+                            textShadow: "2px 2px 0px rgba(47,224,203,0.3)",
+                            transform: `rotate(${i % 2 === 0 ? '5deg' : '-5deg'}) translateY(${i % 3 === 0 ? '-2px' : '2px'})`
+                          }}
+                        >
+                          {digit}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Decorative lines to make it look like a captcha */}
+                  <div className="absolute inset-0 opacity-10 pointer-events-none">
+                    <div className="absolute top-1/2 left-0 w-full h-px bg-[#1c8079] -rotate-6" />
+                    <div className="absolute top-1/3 left-0 w-full h-px bg-[#1c8079] rotate-12" />
+                  </div>
+                </div>
+
+                {/* OTP Input */}
+                <div>
+                  <label htmlFor="otp" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
+                    Enter the code shown above
+                  </label>
+                  <input
+                    id="otp"
+                    name="otp"
+                    type="text"
+                    maxLength="6"
+                    value={formData.otp}
+                    onChange={handleChange}
+                    placeholder="Type code here"
+                    className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all duration-200"
+                    style={inputStyle("otp")}
+                    onFocus={handleFocus}
+                    onBlur={(e) => handleBlur(e, "otp")}
+                  />
+                  {errors.otp && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.otp}</p>}
+                </div>
               </div>
-              {formData.confirmPassword && formData.password && (
-                <p className="mt-1.5 text-xs font-medium" style={{
-                  color: formData.password === formData.confirmPassword ? C.successGreen : C.errorRed,
-                }}>
-                  {formData.password === formData.confirmPassword ? "✓ Passwords match" : "Passwords do not match"}
-                </p>
-              )}
-              {errors.confirmPassword && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.confirmPassword}</p>}
-            </div>
+            )}
 
             {/* Submit */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isCurrentEmailLocked}
               className="w-full py-3.5 rounded-xl text-white text-sm tracking-widest uppercase font-semibold transition-all duration-300 mt-2"
               style={{
-                background: isLoading
+                background: (isLoading || isCurrentEmailLocked)
                   ? "#7ab8b4"
                   : `linear-gradient(135deg, ${C.primaryLight} 0%, ${C.primary} 50%, ${C.primaryDark} 100%)`,
                 letterSpacing: "0.15em",
-                boxShadow: isLoading ? "none" : "0 4px 20px rgba(28,128,121,0.35)",
-                cursor: isLoading ? "not-allowed" : "pointer",
+                boxShadow: (isLoading || isCurrentEmailLocked) ? "none" : "0 4px 20px rgba(28,128,121,0.35)",
+                cursor: (isLoading || isCurrentEmailLocked) ? "not-allowed" : "pointer",
               }}
               onMouseEnter={(e) => {
-                if (!isLoading) {
+                if (!isLoading && !isCurrentEmailLocked) {
                   e.currentTarget.style.transform = "translateY(-1px)";
                   e.currentTarget.style.boxShadow = "0 6px 28px rgba(28,128,121,0.45)";
                 }
@@ -361,10 +518,12 @@ export default function RegisterPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Creating Account...
+                  {step === 1 ? "Sending OTP..." : "Verifying..."}
                 </span>
+              ) : isCurrentEmailLocked ? (
+                `Locked (${countdown})`
               ) : (
-                "Create Account"
+                step === 1 ? "Send OTP" : "Verify & Join"
               )}
             </button>
           </form>

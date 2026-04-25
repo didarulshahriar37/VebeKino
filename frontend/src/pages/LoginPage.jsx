@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
+import { useAuth } from "../contexts/AuthContext";
+import { ArrowLeft } from "lucide-react";
 
 // Brand colors matching VebeKino homepage
 const C = {
@@ -19,12 +21,67 @@ const C = {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState("");
+  const [generalSuccess, setGeneralSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
+  const [receivedOtp, setReceivedOtp] = useState(""); // For "captcha" style display
+  const [lockUntil, setLockUntil] = useState(null);
+  const [lockedEmail, setLockedEmail] = useState(""); // Track WHICH email is locked
+  const [countdown, setCountdown] = useState("");
+  const [isBackendLocked, setIsBackendLocked] = useState(false); // New state for live check
+
+  const isCurrentEmailLocked = (lockedEmail && formData.email === lockedEmail && lockUntil && new Date() < new Date(lockUntil)) || isBackendLocked;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (lockUntil) {
+        const remaining = new Date(lockUntil) - new Date();
+        if (remaining <= 0) {
+          setLockUntil(null);
+          setGeneralError("");
+        } else {
+          const h = Math.floor(remaining / 3600000);
+          const m = Math.floor((remaining % 3600000) / 60000);
+          const s = Math.floor((remaining % 60000) / 1000);
+          setCountdown(`${h}h ${m}m ${s}s`);
+        }
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockUntil]);
+
+  // Live Backend Check (Debounced)
+  useEffect(() => {
+    if (!formData.email || !formData.email.includes("@")) {
+      setIsBackendLocked(false);
+      return;
+    }
+
+    const checkLock = async () => {
+      try {
+        const res = await fetch(`http://localhost:3000/status?email=${formData.email}`);
+        const data = await res.json();
+        if (data.is_locked) {
+          setIsBackendLocked(true);
+          setLockUntil(data.lock_until);
+          setLockedEmail(data.email);
+        } else {
+          setIsBackendLocked(false);
+        }
+      } catch (err) {
+        console.error("Status check failed", err);
+      }
+    };
+
+    const timeout = setTimeout(checkLock, 500); // 500ms debounce
+    return () => clearTimeout(timeout);
+  }, [formData.email]);
 
   const validate = () => {
     const newErrors = {};
@@ -32,7 +89,12 @@ export default function LoginPage() {
     if (!formData.email.trim()) newErrors.email = "Email is required.";
     else if (!emailRegex.test(formData.email)) newErrors.email = "Please enter a valid email address.";
     if (!formData.password) newErrors.password = "Password is required.";
-    else if (formData.password.length < 8) newErrors.password = "Password must be at least 8 characters.";
+    return newErrors;
+  };
+
+  const validateOtpStep = () => {
+    const newErrors = {};
+    if (!formData.otp || formData.otp.length !== 6) newErrors.otp = "Please enter a valid 6-digit OTP.";
     return newErrors;
   };
 
@@ -41,20 +103,82 @@ export default function LoginPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
     setGeneralError("");
+    setGeneralSuccess("");
+  };
+
+  const handleBack = () => {
+    if (step === 2) {
+      setStep(1);
+      setGeneralError("");
+      setGeneralSuccess("");
+    } else {
+      navigate(-1);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validate();
+    if (step === 1) {
+      const validationErrors = validate();
+      if (Object.keys(validationErrors).length > 0) { setErrors(validationErrors); return; }
+      
+      setIsLoading(true);
+      setErrors({});
+      setGeneralError("");
+      try {
+        const res = await fetch("http://localhost:3000/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: formData.email, password: formData.password }),
+        });
+        const data = await res.json();
+        if (res.status === 403) {
+          setLockUntil(data.locked_until);
+          setLockedEmail(formData.email);
+          throw new Error(`Account locked. Try again in ${countdown || "a few hours"}`);
+        }
+        if (!res.ok) throw new Error(data.error || "Login failed");
+        
+        setReceivedOtp(data.otp);
+        setGeneralSuccess("Credentials valid. Please enter the OTP.");
+        setStep(2);
+      } catch (err) {
+        setGeneralError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      handleVerifyOtp(e);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    if (e) e.preventDefault();
+    const validationErrors = validateOtpStep();
     if (Object.keys(validationErrors).length > 0) { setErrors(validationErrors); return; }
+
     setIsLoading(true);
     setErrors({});
     setGeneralError("");
     try {
-      await new Promise((res) => setTimeout(res, 1000));
-      navigate("/dashboard");
+      const res = await fetch("http://localhost:3000/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, otp: formData.otp }),
+      });
+      const data = await res.json();
+      if (res.status === 403) {
+        setLockUntil(data.locked_until);
+        setLockedEmail(formData.email);
+        throw new Error(`Verification failed. Account locked for ${countdown || "a few hours"}`);
+      }
+      if (!res.ok) throw new Error(data.error || "Failed to verify OTP");
+
+      setGeneralSuccess("Verified successfully! Signing you in...");
+      login({ email: data.email, role: data.role, name: data.name });
+      navigate(data.role === "admin" ? "/admin/dashboard" : "/user/dashboard");
     } catch (err) {
-      setGeneralError(err.message || "Invalid email or password. Please try again.");
+      setGeneralError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -125,6 +249,18 @@ export default function LoginPage() {
       {/* Right form panel */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12" style={{ backgroundColor: C.white }}>
         <div className="w-full max-w-md">
+          {/* Back Button */}
+          <button 
+            onClick={handleBack}
+            className="group flex items-center gap-2 mb-8 text-xs font-bold uppercase tracking-widest transition-all duration-300"
+            style={{ color: C.textMuted }}
+            onMouseEnter={(e) => e.currentTarget.style.color = C.primary}
+            onMouseLeave={(e) => e.currentTarget.style.color = C.textMuted}
+          >
+            <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
+            <span>{step === 1 ? "Back" : "Change Credentials"}</span>
+          </button>
+
           {/* Mobile brand */}
           <div className="lg:hidden mb-8 text-center">
             <Link to="/" className="text-2xl font-bold" style={{ color: C.text }}>
@@ -135,18 +271,55 @@ export default function LoginPage() {
           {/* Heading */}
           <div className="mb-8">
             <p className="text-xs tracking-[0.25em] uppercase mb-2 font-semibold" style={{ color: C.primary }}>
-              Sign In
+              {step === 1 ? "Sign In" : "Security Check"}
             </p>
             <h1 className="text-4xl font-bold mb-2" style={{ color: C.text }}>
-              Welcome back
+              {step === 1 ? "Welcome back" : "Verify it's you"}
             </h1>
             <p className="text-sm" style={{ color: C.textMuted }}>
-              Don't have an account?{" "}
-              <Link to="/auth/register" className="font-semibold underline underline-offset-2" style={{ color: C.primary }}>
-                Register here
-              </Link>
+              {step === 1 ? (
+                <>Don't have an account? <Link to="/auth/register" className="font-semibold underline underline-offset-2" style={{ color: C.primary }}>Register here</Link></>
+              ) : (
+                <>We've sent a code to <span className="font-semibold text-black">{formData.email}</span></>
+              )}
             </p>
           </div>
+
+          {/* OTP Captcha Display (Step 2 Only) */}
+          {step === 2 && receivedOtp && (
+            <div 
+              className="mb-8 p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4"
+              style={{ 
+                backgroundColor: "#f0fdfa", 
+                borderColor: C.primaryLight,
+                boxShadow: "0 10px 30px -10px rgba(47, 224, 203, 0.2)"
+              }}
+            >
+              <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-teal-600">Verification Code</p>
+              <div className="flex gap-3">
+                {receivedOtp.split("").map((digit, i) => (
+                  <div 
+                    key={i} 
+                    className="w-10 h-12 flex items-center justify-center rounded-lg bg-white border border-teal-100 text-xl font-black text-teal-700 shadow-sm"
+                    style={{ fontFamily: "'Space Mono', monospace" }}
+                  >
+                    {digit}
+                  </div>
+                ))}
+              </div>
+              <p className="text-[9px] text-teal-500/70 font-medium italic">For demonstration: OTP is shown on screen</p>
+            </div>
+          )}
+
+          {/* General success */}
+          {generalSuccess && (
+            <div
+              className="mb-5 px-4 py-3 rounded-lg text-sm border animate-in fade-in"
+              style={{ backgroundColor: "#f0fdf4", borderColor: "#bbf7d0", color: C.primary }}
+            >
+              {generalSuccess}
+            </div>
+          )}
 
           {/* General error */}
           {generalError && (
@@ -160,116 +333,98 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
-                Email Address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="your@email.com"
-                className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all duration-200"
-                style={{
-                  borderColor: errors.email ? C.errorRed : C.border,
-                  color: C.text,
-                  backgroundColor: errors.email ? "#fff8f7" : C.bg,
-                  boxShadow: errors.email ? `0 0 0 3px rgba(28,128,121,0.08)` : "none",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = C.borderFocus;
-                  e.target.style.boxShadow = "0 0 0 3px rgba(28,128,121,0.12)";
-                  e.target.style.backgroundColor = C.white;
-                }}
-                onBlur={(e) => {
-                  if (!errors.email) {
-                    e.target.style.borderColor = C.border;
-                    e.target.style.boxShadow = "none";
-                    e.target.style.backgroundColor = C.bg;
-                  }
-                }}
-              />
-              {errors.email && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.email}</p>}
-            </div>
+            {step === 1 ? (
+              <>
+                <div>
+                  <label htmlFor="email" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
+                    Email Address
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="your@email.com"
+                    className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all duration-200"
+                    style={{
+                      borderColor: errors.email ? C.errorRed : C.border,
+                      color: C.text,
+                      backgroundColor: errors.email ? "#fff8f7" : C.bg,
+                    }}
+                  />
+                  {errors.email && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.email}</p>}
+                </div>
 
-            {/* Password */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label htmlFor="password" className="block text-xs tracking-widest uppercase font-semibold" style={{ color: C.textMuted }}>
-                  Password
+                <div>
+                  <label htmlFor="password" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Enter your password"
+                      className="w-full px-4 py-3 pr-14 rounded-xl border text-sm outline-none transition-all duration-200"
+                      style={{
+                        borderColor: errors.password ? C.errorRed : C.border,
+                        color: C.text,
+                        backgroundColor: errors.password ? "#fff8f7" : C.bg,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-xs tracking-widest uppercase font-semibold"
+                      style={{ color: C.primary }}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  {errors.password && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.password}</p>}
+                </div>
+              </>
+            ) : (
+              <div>
+                <label htmlFor="otp" className="block text-xs tracking-widest uppercase mb-2 font-semibold" style={{ color: C.textMuted }}>
+                  Enter 6-Digit Code
                 </label>
-                <Link to="/forgot-password" className="text-xs font-medium" style={{ color: C.primary }}>
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
                 <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  value={formData.password}
+                  id="otp"
+                  name="otp"
+                  type="text"
+                  maxLength={6}
+                  value={formData.otp || ""}
                   onChange={handleChange}
-                  placeholder="Minimum 8 characters"
-                  className="w-full px-4 py-3 pr-14 rounded-xl border text-sm outline-none transition-all duration-200"
+                  placeholder="0 0 0 0 0 0"
+                  className="w-full px-4 py-6 rounded-xl border text-center text-2xl font-bold tracking-[0.5em] outline-none transition-all duration-200"
                   style={{
-                    borderColor: errors.password ? C.errorRed : C.border,
-                    color: C.text,
-                    backgroundColor: errors.password ? "#fff8f7" : C.bg,
-                    boxShadow: errors.password ? "0 0 0 3px rgba(28,128,121,0.08)" : "none",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = C.borderFocus;
-                    e.target.style.boxShadow = "0 0 0 3px rgba(28,128,121,0.12)";
-                    e.target.style.backgroundColor = C.white;
-                  }}
-                  onBlur={(e) => {
-                    if (!errors.password) {
-                      e.target.style.borderColor = C.border;
-                      e.target.style.boxShadow = "none";
-                      e.target.style.backgroundColor = C.bg;
-                    }
+                    borderColor: errors.otp ? C.errorRed : C.border,
+                    color: C.primary,
+                    backgroundColor: errors.otp ? "#fff8f7" : C.bg,
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs tracking-widest uppercase font-semibold"
-                  style={{ color: C.primary }}
-                  tabIndex={-1}
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
+                {errors.otp && <p className="mt-1.5 text-xs text-center" style={{ color: C.errorRed }}>{errors.otp}</p>}
               </div>
-              {errors.password && <p className="mt-1.5 text-xs" style={{ color: C.errorRed }}>{errors.password}</p>}
-            </div>
+            )}
 
             {/* Submit */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isCurrentEmailLocked}
               className="w-full py-3.5 rounded-xl text-white text-sm tracking-widest uppercase font-semibold transition-all duration-300 mt-2"
               style={{
-                background: isLoading
+                background: (isLoading || isCurrentEmailLocked)
                   ? "#7ab8b4"
                   : `linear-gradient(135deg, ${C.primaryLight} 0%, ${C.primary} 50%, ${C.primaryDark} 100%)`,
                 letterSpacing: "0.15em",
-                boxShadow: isLoading ? "none" : "0 4px 20px rgba(28,128,121,0.35)",
-                cursor: isLoading ? "not-allowed" : "pointer",
-              }}
-              onMouseEnter={(e) => {
-                if (!isLoading) {
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 6px 28px rgba(28,128,121,0.45)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 20px rgba(28,128,121,0.35)";
+                boxShadow: (isLoading || isCurrentEmailLocked) ? "none" : "0 4px 20px rgba(28,128,121,0.35)",
+                cursor: (isLoading || isCurrentEmailLocked) ? "not-allowed" : "pointer",
               }}
             >
               {isLoading ? (
@@ -278,10 +433,12 @@ export default function LoginPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Signing In...
+                  {step === 1 ? "Checking..." : "Verifying..."}
                 </span>
+              ) : isCurrentEmailLocked ? (
+                `Locked (${countdown})`
               ) : (
-                "Sign In"
+                step === 1 ? "Sign In" : "Verify & Continue"
               )}
             </button>
           </form>

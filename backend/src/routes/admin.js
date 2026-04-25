@@ -1,30 +1,34 @@
-const express  = require('express');
-const router   = express.Router();
-const supabase = require('../db');
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
+const AdminConfig = require('../models/AdminConfig');
 
 // POST /admin/set-lock-hours
-// Body: { hours: 4 }
 router.post('/set-lock-hours', async (req, res) => {
   const { hours } = req.body;
+  if (!hours || isNaN(hours)) return res.status(400).json({ error: 'Valid hours required' });
 
-  if (!hours || isNaN(hours) || hours < 1) {
-    return res.status(400).json({ error: 'Provide a valid number of hours' });
+  try {
+    await AdminConfig.findOneAndUpdate(
+      { key: 'lock_hours' },
+      { value: hours.toString() },
+      { upsert: true }
+    );
+    res.json({ message: `Lock duration set to ${hours} hours` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-
-  await supabase.from('admin_config')
-    .upsert({ key: 'lock_hours', value: String(hours) });
-
-  res.json({ message: `Lock duration set to ${hours} hour(s)` });
 });
 
 // POST /admin/reset-lock
-// Body: { email: "..." }
 router.post('/reset-lock', async (req, res) => {
   const { email } = req.body;
-  await supabase.from('users').update({
-    is_locked: false, lock_until: null
-  }).eq('email', email);
-  res.json({ message: 'Lock reset' });
+  try {
+    await User.findOneAndUpdate({ email }, { is_locked: false, lock_until: null });
+    res.json({ message: 'User lock reset' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 module.exports = router;
