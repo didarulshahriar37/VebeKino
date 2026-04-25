@@ -12,6 +12,8 @@ import AboutPage from "../pages/AboutPage";
 import ContactPage from "../pages/ContactPage";
 import UserDashboardPage from "../pages/UserDash";
 import AdminDashboardPage from "../pages/AdminDash";
+import CartPage from "../pages/CartPage";
+import QueuePage from "../pages/QueuePage";
 
 export const router = createBrowserRouter([
   {
@@ -29,6 +31,14 @@ export const router = createBrowserRouter([
       {
         path: "product-details/:id",
         Component: ProductDetailsPage,
+      },
+      {
+        path: "cart",
+        Component: CartPage,
+      },
+      {
+        path: "queue",
+        Component: QueuePage,
       },
       {
         path: "about-us",
