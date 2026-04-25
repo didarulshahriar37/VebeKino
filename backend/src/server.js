@@ -1,19 +1,22 @@
 require('dotenv').config();
-const express = require('express');
-const signupRoute = require('./routes/signup');
+const express     = require('express');
+const signupRoute     = require('./routes/signup');
+const verifyRoute     = require('./routes/verify-otp');
+const shareRoute      = require('./routes/share-click');
+const statusRoute     = require('./routes/status');
+const adminRoute      = require('./routes/admin');
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware: parse JSON bodies from incoming requests
 app.use(express.json());
 
-// Mount routes
-app.use('/signup', signupRoute);
+app.use('/signup',      signupRoute);
+app.use('/verify-otp',  verifyRoute);
+app.use('/share-click', shareRoute);
+app.use('/status',      statusRoute);
+app.use('/admin',       adminRoute);
 
-// Health check
 app.get('/', (req, res) => res.json({ status: 'Vebe Kino backend running' }));
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server on http://localhost:${PORT}`));
