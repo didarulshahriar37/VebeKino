@@ -42,12 +42,9 @@ const PopularProducts = () => {
   }
 
   return (
-    <section className="py-24 px-6 max-w-7xl mx-auto">
+    <section className="mt-40 mb-40 px-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.3em] mb-3" style={{ color: C.primary }}>
-            Curated Selection
-          </p>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight" style={{ color: C.text }}>
             Popular <span style={{ color: C.primary }}>Products</span>
           </h2>
@@ -64,14 +61,20 @@ const PopularProducts = () => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        {products.map((product) => (
-          <div
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        {products.slice(0, 12).map((product) => (
+          <Link
+            to={`/product-details/${product._id}`}
             key={product._id}
-            className="group relative bg-white rounded-[2rem] p-4 transition-all duration-500 hover:-translate-y-2"
+            className="group relative bg-white rounded-[2rem] p-4 transition-all duration-500 hover:-translate-y-2 block"
             style={{ 
-              boxShadow: "0 10px 40px rgba(0,0,0,0.03)",
-              border: "1px solid rgba(28,128,121,0.08)"
+              boxShadow: "0 0 0 0px transparent, 0 10px 40px rgba(0,0,0,0.03)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = "0 0 0 2px #2fe0cb, 0 20px 50px rgba(0,0,0,0.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = "0 0 0 0px transparent, 0 10px 40px rgba(0,0,0,0.03)";
             }}
           >
             {/* Image Container */}
@@ -81,11 +84,13 @@ const PopularProducts = () => {
                 alt={product.name}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
-              <div className="absolute top-3 right-3">
-                <button className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center shadow-sm transition-colors hover:bg-white text-[#1c8079]">
-                  <ShoppingCart size={18} />
-                </button>
-              </div>
+              {!product.availability && (
+                <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center">
+                  <span className="px-3 py-1 rounded-full bg-[#d94f3d] text-white text-[10px] font-bold uppercase tracking-widest shadow-lg">
+                    Out of Stock
+                  </span>
+                </div>
+              )}
               <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-white/80 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider" style={{ color: C.text }}>
                 {product.category}
               </div>
@@ -93,27 +98,29 @@ const PopularProducts = () => {
 
             {/* Content */}
             <div className="px-2">
-              <div className="flex items-center gap-1 mb-2">
-                <Star size={12} fill={C.accent} stroke={C.accent} />
-                <span className="text-xs font-bold" style={{ color: C.text }}>{product.rating}</span>
-              </div>
-              <h3 className="text-lg font-bold mb-1 truncate" style={{ color: C.text }}>{product.name}</h3>
-              <p className="text-xs mb-4 line-clamp-1" style={{ color: C.textMuted }}>{product.description}</p>
-              
-              <div className="flex items-center justify-between mt-auto">
-                <p className="text-xl font-black" style={{ color: C.primary }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1">
+                  <Star size={12} fill={C.accent} stroke={C.accent} />
+                  <span className="text-xs font-bold" style={{ color: C.text }}>{product.rating}</span>
+                </div>
+                <p className="text-sm font-black" style={{ color: C.primary }}>
                   ${product.price}
                 </p>
-                <Link
-                  to={`/product-details/${product._id}`}
-                  className="text-xs font-bold underline underline-offset-4 decoration-2 decoration-[#2fe0cb] hover:text-[#1c8079] transition-colors"
-                  style={{ color: C.text }}
-                >
-                  Details
-                </Link>
+              </div>
+              <h3 className="text-base font-bold mb-3 truncate" style={{ color: C.text }}>{product.name}</h3>
+              
+              <div 
+                className="w-full py-2.5 rounded-xl text-center text-[10px] font-bold uppercase tracking-widest transition-all duration-300"
+                style={{ 
+                  backgroundColor: C.bg, 
+                  color: C.primary,
+                  border: `1px solid ${C.primary}20`
+                }}
+              >
+                View Details
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

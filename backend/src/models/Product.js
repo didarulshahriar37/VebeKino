@@ -7,6 +7,7 @@ const productSchema = new mongoose.Schema({
   image_url: { type: String },
   category: { type: String },
   rating: { type: Number, default: 0 },
+  availability: { type: Boolean, default: true },
   is_popular: { type: Boolean, default: false }
 }, { timestamps: true });
 
