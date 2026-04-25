@@ -8,5 +8,9 @@
     "mongoose": "^9.5.0",
     "node-cron": "^4.2.1",
     "stripe": "^22.1.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
   }
 }
