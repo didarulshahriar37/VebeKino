@@ -59,8 +59,8 @@ export default function LoginPage() {
   // Live Backend Check (Debounced)
   useEffect(() => {
     if (!formData.email || !formData.email.includes("@")) {
-      setIsBackendLocked(false);
-      return;
+      const resetBackendLock = setTimeout(() => setIsBackendLocked(false), 0);
+      return () => clearTimeout(resetBackendLock);
     }
 
     const checkLock = async () => {

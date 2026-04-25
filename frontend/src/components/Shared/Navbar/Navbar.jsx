@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { Menu, ShoppingCart, X, ChevronDown, LayoutDashboard, LogOut } from 'lucide-react';
 import { Link, NavLink, useNavigate } from 'react-router';
 import { useAuth } from "../../../contexts/AuthContext";
+import { useCart } from "../../../contexts/CartContext";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { cartCount } = useCart();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -104,7 +106,12 @@ const Navbar = () => {
                 </Link>
               </>
             )}
-            <Link to={"/"}><ShoppingCart /></Link>
+            <Link to={"/cart"} className="relative">
+              <ShoppingCart />
+              <span className={`absolute -top-2 -right-2 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-md transition-all duration-300 ${cartCount > 0 ? 'bg-[#1c8079] scale-110' : 'bg-gray-400 scale-100'}`}>
+                {cartCount}
+              </span>
+            </Link>
           </div>
 
           {}
