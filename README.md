@@ -3,7 +3,7 @@
 **VebeKino** is a revolutionary e-commerce platform designed to combat impulse buying and promote intentional consumerism. Unlike traditional shops that use "dark patterns" to rush your purchase, VebeKino introduces a **cooling-off period** and a **cognitive justification system** to ensure you only buy what you truly need.
 
 ## 🚀 Live Demo
-- **Frontend:** [https://vebekino.netlify.app/](https://vebekino.netlify.app/) (Placeholder - replace with your live URL)
+- **Frontend:** [https://vebe-kino.netlify.app/](https://vebe-kino.netlify.app/)
 - **Backend:** [https://vebekino.onrender.com/](https://vebekino.onrender.com/)
 
 ---
