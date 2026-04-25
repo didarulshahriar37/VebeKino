@@ -27,6 +27,7 @@ const finalAccessRoute = require('./routes/final-access');
 const prosConsRoute    = require('./routes/generate-pros-cons');
 const cartRoute        = require('./routes/cart');
 const queueRoute       = require('./routes/queue');
+const paymentRoute     = require('./routes/payment');
 
 app.use('/signup',             signupRoute);
 app.use('/verify-otp',        verifyOtpRoute);
@@ -39,6 +40,7 @@ app.use('/generate-pros-cons', prosConsRoute);
 app.use('/products',          productsRoute);
 app.use('/cart',              cartRoute);
 app.use('/queue',             queueRoute);
+app.use('/payment',           paymentRoute);
 
 app.get('/', (req, res) => res.json({ status: 'Vebe Kino backend running on MongoDB' }));
 

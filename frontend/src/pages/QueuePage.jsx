@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Clock, Lock, CheckCircle2, ArrowRight, Trash2 } from "lucide-react";
+import { Link, useNavigate } from "react-router";
 
 const C = {
   primary: "#1c8079",
@@ -18,6 +19,12 @@ const useCountdown = (targetDate) => {
   const [isLocked, setIsLocked] = useState(true);
 
   useEffect(() => {
+    if (!targetDate) {
+      setIsLocked(false);
+      setTimeLeft("");
+      return;
+    }
+
     const interval = setInterval(() => {
       const now = new Date().getTime();
       const distance = new Date(targetDate).getTime() - now;
@@ -87,21 +94,54 @@ const QueueItemCard = ({ item, onRemove }) => {
             <div className="bg-[#f0fafa] border px-4 py-3 rounded-2xl flex items-center gap-3 w-full justify-center" style={{ borderColor: C.border }}>
               <Lock size={18} style={{ color: C.primary }} />
               <div className="text-center">
-                <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: C.textMuted }}>Cooling Down</p>
-                <p className="font-mono font-black text-lg" style={{ color: C.text }}>{timeLeft}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: C.textMuted }}>
+                  {isLocked ? "Cooling Down" : "Processing"}
+                </p>
+                <p className="font-mono font-black text-lg" style={{ color: C.text }}>
+                  {isLocked ? timeLeft : "AI Analyzing..."}
+                </p>
               </div>
             </div>
             <p className="text-[10px] font-bold text-gray-400 text-center">
-              Temporarily locked. Take a moment to think if you really need this.
+              {isLocked 
+                ? "Temporarily locked. Take a moment to think if you really need this." 
+                : "Timer finished. Waiting for AI to generate Pros/Cons..."}
             </p>
           </>
-        ) : (
+        ) : item.gate === 2 ? (
           <div className="w-full">
-            <button className="w-full bg-[#1c8079] text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:shadow-lg transition-all hover:-translate-y-1">
-              Ready to Review <ArrowRight size={16} />
-            </button>
-            <p className="text-[10px] font-bold text-[#1c8079] text-center mt-3 flex items-center justify-center gap-1">
-              <CheckCircle2 size={12} /> Pros & Cons Ready
+            {!item.cognitivePassed ? (
+              <>
+                <Link 
+                  to={`/review/${item._id}`}
+                  className="w-full bg-[#1c8079] text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:shadow-lg transition-all hover:-translate-y-1"
+                >
+                  Ready to Review <ArrowRight size={16} />
+                </Link>
+                <p className="text-[10px] font-bold text-[#1c8079] text-center mt-3 flex items-center justify-center gap-1">
+                  <CheckCircle2 size={12} /> Pros & Cons Ready
+                </p>
+              </>
+            ) : (
+              <div className="w-full bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2">
+                <CheckCircle2 size={16} /> Review Complete
+              </div>
+            )}
+          </div>
+        ) : item.gate === 3 ? (
+          <div className="w-full text-center p-4 bg-[#f0fafa] rounded-2xl border" style={{ borderColor: C.border }}>
+            <p className="text-sm font-bold" style={{ color: C.text }}>Pending Community Validation</p>
+            <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">Share to unlock</p>
+          </div>
+        ) : item.gate === 4 ? (
+          <div className="w-full text-center p-4 bg-purple-50 rounded-2xl border border-purple-200">
+            <p className="text-sm font-bold text-purple-700">Ready for Final Approval</p>
+            <p className="text-[10px] text-purple-500 mt-1 uppercase tracking-widest">Explain your intent below</p>
+          </div>
+        ) : (
+          <div className="w-full text-center p-4 bg-green-50 rounded-2xl border border-green-200">
+            <p className="text-sm font-bold text-green-700 flex items-center justify-center gap-2">
+              <CheckCircle2 size={16} /> Fully Unlocked
             </p>
           </div>
         )}
@@ -112,17 +152,26 @@ const QueueItemCard = ({ item, onRemove }) => {
 
 const QueuePage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [queueItems, setQueueItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let interval;
     if (user) {
-      fetch(`http://localhost:3000/queue/${user.email}`)
-        .then((res) => res.json())
-        .then((data) => setQueueItems(data))
-        .catch((err) => console.error(err))
-        .finally(() => setLoading(false));
+      const fetchQueue = () => {
+        fetch(`http://localhost:3000/queue/${user.email}`)
+          .then((res) => res.json())
+          .then((data) => setQueueItems(data))
+          .catch((err) => console.error(err))
+          .finally(() => setLoading(false));
+      };
+
+      fetchQueue();
+      // Poll every 3 seconds to catch cron job updates automatically
+      interval = setInterval(fetchQueue, 3000);
     }
+    return () => clearInterval(interval);
   }, [user]);
 
   const handleRemoveItem = async (id) => {
@@ -164,11 +213,209 @@ const QueuePage = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {queueItems.map((item) => (
-              <QueueItemCard key={item._id} item={item} onRemove={handleRemoveItem} />
-            ))}
+            <div className="space-y-4">
+              {queueItems.map((item) => (
+                <QueueItemCard key={item._id} item={item} onRemove={handleRemoveItem} />
+              ))}
+            </div>
+
+            {/* Global Action Block at the Bottom */}
+            <div className="mt-12 bg-white p-8 rounded-3xl shadow-xl border flex flex-col md:flex-row items-center justify-between gap-6" style={{ borderColor: C.border }}>
+              {(() => {
+                const gate1Items = queueItems.filter(i => i.gate === 1);
+                const gate2Items = queueItems.filter(i => i.gate === 2);
+                const gate3Items = queueItems.filter(i => i.gate === 3);
+                const gate4Items = queueItems.filter(i => i.gate === 4);
+                const gate5Items = queueItems.filter(i => i.gate === 5);
+
+                // Hierarchy: If ANY item is in Gate 1, we must wait.
+                // If NO Gate 1, but ANY Gate 2, we must review those.
+                // If NO Gate 1 or 2, and ANY Gate 3, we do Social.
+
+                if (gate1Items.length > 0) {
+                  return (
+                    <div className="text-center w-full py-4">
+                      <h3 className="text-2xl font-black mb-1 flex items-center justify-center gap-2" style={{ color: C.text }}>
+                        <Lock size={24} style={{ color: C.primary }} /> Cooling Down
+                      </h3>
+                      <p className="font-bold text-gray-400 uppercase tracking-widest">Awaiting timer completion</p>
+                    </div>
+                  );
+                } else if (gate2Items.length > 0) {
+                  const unreviewedItems = gate2Items.filter(i => !i.cognitivePassed);
+                  
+                  if (unreviewedItems.length > 0) {
+                    const firstUnreviewed = unreviewedItems[0];
+                    return (
+                      <>
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-black mb-1" style={{ color: C.text }}>Ready for Review</h3>
+                          <p style={{ color: C.textMuted }}>You must review all items before proceeding to the next phase. {unreviewedItems.length} item{unreviewedItems.length > 1 ? 's' : ''} left.</p>
+                        </div>
+                        <Link 
+                          to={`/review/${firstUnreviewed._id}`}
+                          className="bg-[#1c8079] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:shadow-lg transition-all hover:-translate-y-1 whitespace-nowrap"
+                        >
+                          Review Next Item <ArrowRight size={18} />
+                        </Link>
+                      </>
+                    );
+                  } else {
+                    // All Gate 2 items are reviewed
+                    return (
+                      <>
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-black mb-1 text-green-600 flex items-center gap-2">
+                            <CheckCircle2 size={24} /> All Reviews Complete
+                          </h3>
+                          <p style={{ color: C.textMuted }}>You have successfully reviewed the AI pros and cons for all your items.</p>
+                        </div>
+                        <button 
+                          onClick={async () => {
+                            await fetch('http://localhost:3000/queue/batch-pass-gate-2', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ userEmail: user.email })
+                            });
+                            // Force fetch
+                            fetch(`http://localhost:3000/queue/${user.email}`)
+                              .then(res => res.json())
+                              .then(data => setQueueItems(data));
+                          }}
+                          className="bg-[#1c8079] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:shadow-lg transition-all hover:-translate-y-1 whitespace-nowrap"
+                        >
+                          Proceed to Community Validation <ArrowRight size={18} />
+                        </button>
+                      </>
+                    );
+                  }
+                } else if (gate3Items.length > 0) {
+                  return <GlobalSocialBlock gate3Items={gate3Items} userEmail={user.email} onUpdate={() => {
+                    fetch(`http://localhost:3000/queue/${user.email}`)
+                      .then((res) => res.json())
+                      .then((data) => setQueueItems(data));
+                  }} />;
+                } else if (gate4Items.length > 0) {
+                  const firstGate4 = gate4Items[0];
+                  return (
+                    <>
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-black mb-1" style={{ color: C.text }}>Final Check: Is this necessary?</h3>
+                        <p style={{ color: C.textMuted }}>Take a moment to explain why this purchase is a responsible decision. {gate4Items.length} item{gate4Items.length > 1 ? 's' : ''} left.</p>
+                      </div>
+                      <Link 
+                        to={`/justify/${firstGate4._id}`}
+                        className="bg-purple-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:shadow-lg transition-all hover:-translate-y-1 whitespace-nowrap"
+                      >
+                        Review Purchase Intent <ArrowRight size={18} />
+                      </Link>
+                    </>
+                  );
+                } else if (gate5Items.length > 0) {
+                  return (
+                    <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6">
+                      <div>
+                        <h3 className="text-3xl font-black mb-1 text-green-600 flex items-center gap-2">
+                          <CheckCircle2 size={28} /> All Gates Passed!
+                        </h3>
+                        <p style={{ color: C.textMuted }}>Congratulations! You have successfully survived the anti-impulse gauntlet. You may now proceed to final checkout.</p>
+                      </div>
+                      <button 
+                        className="bg-green-600 text-white px-12 py-5 rounded-3xl font-black uppercase tracking-widest text-lg flex items-center justify-center gap-2 hover:shadow-xl transition-all hover:-translate-y-1 whitespace-nowrap"
+                        onClick={() => {
+                          const totalAmount = gate5Items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+                          navigate('/checkout', { state: { amount: totalAmount } });
+                        }}
+                      >
+                        Checkout Now
+                      </button>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div className="text-center w-full py-4">
+                      <p className="font-bold text-[#1c8079] uppercase tracking-widest text-xl">Proceeding to Final Approval...</p>
+                    </div>
+                  );
+                }
+              })()}
+            </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+// Global Social Sharing Block (Gate 3)
+const GlobalSocialBlock = ({ gate3Items, userEmail, onUpdate }) => {
+  const stateItem = gate3Items[0]; // All items in Gate 3 have the same sharesCount
+  const sharesCount = stateItem.sharesCount || 0;
+  const { timeLeft, isLocked } = useCountdown(stateItem.socialFallbackTime);
+
+  const handleShare = async () => {
+    try {
+      const res = await fetch('http://localhost:3000/queue/share', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail })
+      });
+      if (res.ok) {
+        onUpdate();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="w-full flex flex-col items-center">
+      <div className="text-center mb-6">
+        <h3 className="text-2xl font-black mb-2" style={{ color: C.text }}>Community Validation</h3>
+        <p style={{ color: C.textMuted }}>
+          To ensure you truly need these items, we ask that you share them with 5 friends.
+          <br/>Taking this extra step helps prevent impulsive purchases. (1-minute pause between shares.)
+        </p>
+      </div>
+
+      <div className="flex flex-wrap justify-center gap-4 w-full max-w-3xl">
+        {[0, 1, 2, 3, 4].map((index) => {
+          const isCompleted = sharesCount > index;
+          const isActive = sharesCount === index;
+          
+          if (isCompleted) {
+            return (
+              <div key={index} className="flex-1 min-w-[120px] h-14 bg-green-50 border border-green-200 rounded-xl flex items-center justify-center text-green-600 font-bold gap-2">
+                <CheckCircle2 size={18} /> Shared
+              </div>
+            );
+          }
+
+          if (isActive) {
+            if (isLocked) {
+              return (
+                <div key={index} className="flex-1 min-w-[120px] h-14 bg-gray-100 border border-gray-300 rounded-xl flex items-center justify-center text-gray-500 font-mono font-bold shadow-inner">
+                  {timeLeft}
+                </div>
+              );
+            }
+            return (
+              <button 
+                key={index}
+                onClick={handleShare}
+                className="flex-1 min-w-[120px] h-14 bg-[#1c8079] text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:-translate-y-1 hover:shadow-lg transition-all"
+              >
+                Share Now
+              </button>
+            );
+          }
+
+          return (
+            <div key={index} className="flex-1 min-w-[120px] h-14 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-400 font-bold gap-2 opacity-50">
+              <Lock size={14} /> Locked
+            </div>
+          );
+        })}
       </div>
     </div>
   );
