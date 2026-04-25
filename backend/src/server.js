@@ -8,8 +8,10 @@ const connectDB = require('./db');
   // Connect to Database
   await connectDB();
 
-  // Load cron jobs after DB connects
-  require('./cron/queueCron');
+  // Load cron jobs only in development (Vercel doesn't support background crons)
+  if (process.env.NODE_ENV !== 'production') {
+    require('./cron/queueCron');
+  }
 })();
 
 const app = express();
