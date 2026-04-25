@@ -50,11 +50,9 @@ app.use('/orders', ordersRoute);
 
 app.get('/', (req, res) => res.json({ status: 'Vebe Kino backend running on MongoDB' }));
 
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
-        console.log(`Server started on port ${PORT}`);
-        console.log(`API URL: http://localhost:${PORT}`);
-    });
-}
+app.listen(PORT, () => {
+    console.log(`Server started on port ${PORT}`);
+    console.log(`API URL: http://localhost:${PORT}`);
+});
 
 module.exports = app;
