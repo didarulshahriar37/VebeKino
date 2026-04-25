@@ -94,4 +94,4 @@ Your app will be running at `http://localhost:5173`.
 ---
 
 ## 📜 License
-This project was built for the **FRICTION — Hackathon** by **Didarul Shahriar**.
+This project was built for the **FRICTION — Hackathon** by **Didarul Shahriar**, **Ashfaque Sadad**, **Zahin Uddin Nirob** and **Tiran Abdullah**.
