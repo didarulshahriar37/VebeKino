@@ -40,7 +40,7 @@ const C = {
   dangerBg:     "rgba(224,90,90,0.08)",
 };
 
-import { useEffect } from "react";
+
 
 // ── Small helpers ──────────────────────────────────────────────────────────────
 const RoleBadge = ({ role }) => (
