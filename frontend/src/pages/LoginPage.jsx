@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { ArrowLeft } from "lucide-react";
+import SEO from "../components/Shared/SEO";
 
 // Brand colors matching VebeKino homepage
 const C = {
@@ -186,6 +187,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
+      <SEO 
+        title="Login" 
+        description="Access your VebeKino account to manage your waitlist, track orders, and view your anti-impulse progress." 
+      />
       {/* Left decorative panel */}
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12"

@@ -10,8 +10,9 @@
  *   role: "admin" | "user"           stored under key "role"
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Mail, Shield, Save, CheckCircle, Pencil, X } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 const C = {
   primary:      "#1c8079",
@@ -24,21 +25,9 @@ const C = {
   white:        "#ffffff",
 };
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// Helper
 const getInitials = (name = "") =>
   name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-
-const readUserFromStorage = () => {
-  try {
-    return JSON.parse(localStorage.getItem("user")) || {};
-  } catch {
-    return {};
-  }
-};
-
-const saveUserToStorage = (userData) => {
-  localStorage.setItem("user", JSON.stringify(userData));
-};
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 const InfoRow = ({ icon: Icon, label, value, muted = false }) => (
@@ -68,16 +57,33 @@ const InfoRow = ({ icon: Icon, label, value, muted = false }) => (
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function ProfilePage() {
-  const storedUser = readUserFromStorage();
-  const role       = localStorage.getItem("role") || "user";
-  const isAdmin    = role === "admin";
+  const { user, updateUser } = useAuth();
+  const isAdmin = user?.role === "admin";
 
-  const [name,       setName]       = useState(storedUser.name  || (isAdmin ? "Admin" : "John Doe"));
-  const [email]                     = useState(storedUser.email || (isAdmin ? "admin@vebkino.com" : "john@gmail.com"));
+  const [name,       setName]       = useState(user?.name  || (isAdmin ? "Admin" : "User"));
+  const [email]                     = useState(user?.email || (isAdmin ? "admin@vebkino.com" : "user@vebkino.com"));
   const [isEditing,  setIsEditing]  = useState(false);
   const [editedName, setEditedName] = useState(name);
   const [saved,      setSaved]      = useState(false);
   const [error,      setError]      = useState("");
+  const [orderCount, setOrderCount] = useState(0);
+  const [queueCount, setQueueCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.email) {
+      // Fetch orders count
+      fetch(`http://localhost:3000/orders/user/${user.email}`)
+        .then(res => res.json())
+        .then(data => setOrderCount(data.length))
+        .catch(err => console.error("Error fetching order count:", err));
+
+      // Fetch queue count
+      fetch(`http://localhost:3000/queue/${user.email}`)
+        .then(res => res.json())
+        .then(data => setQueueCount(data.length))
+        .catch(err => console.error("Error fetching queue count:", err));
+    }
+  }, [user]);
 
   const handleEdit = () => {
     setEditedName(name);
@@ -103,9 +109,8 @@ export default function ProfilePage() {
       return;
     }
 
-    // Persist to localStorage
-    const updated = { ...storedUser, name: trimmed };
-    saveUserToStorage(updated);
+    // Persist
+    updateUser({ name: trimmed });
 
     setName(trimmed);
     setIsEditing(false);
@@ -169,7 +174,7 @@ export default function ProfilePage() {
           <div className="w-full grid grid-cols-2 gap-3">
             {(isAdmin
               ? [{ label: "Total Orders", value: "2,589" }, { label: "Products",     value: "320"   }]
-              : [{ label: "My Orders",    value: "12"     }, { label: "Wishlist",     value: "8"     }]
+              : [{ label: "My Orders",    value: orderCount }, { label: "Waitlist",     value: queueCount }]
             ).map(({ label, value }) => (
               <div
                 key={label}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SEO from "../components/Shared/SEO";
 import { Mail, Phone, Clock, ArrowRight, CheckCircle } from "lucide-react";
 
 const C = {
@@ -122,7 +123,11 @@ export default function ContactPage() {
   };
 
   return (
-    <div style={{ fontFamily: "'DM Sans', 'Segoe UI', sans-serif", backgroundColor: C.bg, color: C.text }}>
+    <div className="min-h-screen" style={{ fontFamily: "'DM Sans', 'Segoe UI', sans-serif", backgroundColor: C.bg, color: C.text }}>
+      <SEO 
+        title="Contact Us" 
+        description="Have questions about our Anti-Impulse system? Reach out to the VebeKino team for support or feedback." 
+      />
 
       {/* ── HERO ── */}
       <section

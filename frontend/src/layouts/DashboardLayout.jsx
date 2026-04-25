@@ -9,7 +9,9 @@ import {
   Menu,
   X,
   Users,
+  Clock,
 } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 const C = {
   primary:      "#1c8079",
@@ -27,6 +29,7 @@ const C = {
 
 const userNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", to: "/dashboard"         },
+  { icon: Clock,           label: "Waitlist",  to: "/queue"             },
   { icon: ShoppingBag,     label: "My Orders", to: "/dashboard/orders"  },
   { icon: User,            label: "Profile",   to: "/dashboard/profile" },
 ];
@@ -49,25 +52,23 @@ const performLogout = (navigate) => {
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  const role       = localStorage.getItem("role") || "user";
-  const storedUser = (() => {
-    try { return JSON.parse(localStorage.getItem("user")) || null; }
-    catch { return null; }
-  })();
-
-  const isAdmin    = role === "admin";
+  const isAdmin    = user?.role === "admin";
   const navItems   = isAdmin ? adminNavItems : userNavItems;
 
-  const displayName   = storedUser?.name  || (isAdmin ? "Admin"             : "John Doe");
-  const displayEmail  = storedUser?.email || (isAdmin ? "admin@vebkino.com" : "john@gmail.com");
+  const displayName   = user?.name  || (isAdmin ? "Admin"             : "User");
+  const displayEmail  = user?.email || (isAdmin ? "admin@vebkino.com" : "user@vebkino.com");
   const displayAvatar = displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   const displayRole   = isAdmin ? "Super Admin" : "Member";
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const handleLogout = () => performLogout(navigate);
+  const handleLogout = () => {
+    logout();
+    navigate("/auth/login", { replace: true });
+  };
 
   return (
     <div

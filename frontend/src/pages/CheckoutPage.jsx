@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 // Replace with your publishable key from Stripe Dashboard
 const stripePromise = loadStripe('pk_test_51SWKQfBDrJk4FICQz5nSoDl0BwaYbcou9UWud7xLX5JPNRZzQBiqoLaq2evLsvRqm0terCoP7402AbNpLH0b0KxB004pqXsNEy');
 
-const CheckoutForm = ({ amount }) => {
+const CheckoutForm = ({ amount, items }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { user } = useAuth();
@@ -49,6 +49,25 @@ const CheckoutForm = ({ amount }) => {
     } else {
       setError(null);
       setProcessing(false);
+
+      // Create Order in database
+      await fetch('http://localhost:3000/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user?.email,
+          items: items.map(i => ({
+            productId: i.productId,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+            image: i.image
+          })),
+          totalAmount: amount,
+          paymentIntentId: payload.paymentIntent.id
+        })
+      });
+
       // Clear queue on success
       await fetch(`http://localhost:3000/queue/clear/${user.email}`, { method: 'DELETE' });
       navigate('/success');
@@ -101,6 +120,7 @@ const CheckoutForm = ({ amount }) => {
 const CheckoutPage = () => {
   const location = useLocation();
   const amount = location.state?.amount || 0;
+  const items = location.state?.items || [];
 
   return (
     <div className="min-h-screen pt-32 pb-20 px-6 bg-[#f0fafa]">
@@ -117,7 +137,7 @@ const CheckoutPage = () => {
           </div>
 
           <Elements stripe={stripePromise}>
-            <CheckoutForm amount={amount} />
+            <CheckoutForm amount={amount} items={items} />
           </Elements>
         </div>
         

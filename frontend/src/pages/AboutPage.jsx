@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Leaf, ShieldCheck, Sparkles, Users, Package, Star } from "lucide-react";
+import SEO from "../components/Shared/SEO";
 
 const C = {
   primary: "#1c8079",
@@ -100,7 +101,11 @@ const timeline = [
 
 export default function AboutPage() {
   return (
-    <div style={{ fontFamily: "'DM Sans', 'Segoe UI', sans-serif", backgroundColor: C.bg, color: C.text }}>
+    <div className="min-h-screen" style={{ fontFamily: "'DM Sans', 'Segoe UI', sans-serif", backgroundColor: C.bg, color: C.text }}>
+      <SEO 
+        title="About Us" 
+        description="Learn about VebeKino's mission to combat impulse buying and promote mindful consumerism through AI-driven design." 
+      />
 
       {/* ── HERO ── */}
       <section className="relative overflow-hidden pt-28 pb-24 px-6"
@@ -120,66 +125,25 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── STATS BAR ── */}
-      {/* <section className="py-12 px-6 border-y" style={{ borderColor: C.border, backgroundColor: C.white }}>
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {stats.map((s) => (
-            <div key={s.label}>
-              <p className="text-4xl font-bold mb-1" style={{ color: C.primary }}>{s.value}</p>
-              <p className="text-xs tracking-widest uppercase font-medium" style={{ color: C.textMuted }}>{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </section> */}
-
       {/* ── MISSION ── */}
-<section className="py-20 px-6">
-  <div className="max-w-5xl mx-auto grid md:grid-cols-1 gap-16 items-center">
-    {/* Left: text */}
-    <div className="text-center"> {/* Center-aligned */}
-      <p className="text-s tracking-[0.3em] uppercase font-semibold mb-3" style={{ color: C.primary }}>
-        Why We Exist
-      </p>
-      <h2 className="text-5xl font-bold mb-6 leading-tight" style={{ color: C.text }}> {/* Increased size */}
-        Because not everything<br />you want, you need.
-      </h2>
-      <p className="text-lg leading-relaxed mb-4" style={{ color: C.textMuted }}>
-        Modern e-commerce is designed to make you buy impulsively — infinite scroll, countdown timers, manufactured urgency. We hated that. So we built the opposite.
-      </p>
-      <p className="text-lg leading-relaxed" style={{ color: C.textMuted }}>
-        VebeKino encourages you to think, wait, and then earn your purchase. Every product you add to your list is an intention. Every checkout is a decision you've made — not one that was made for you.
-      </p>
-    </div>
-
-    {/* Right: pull quote card (commented out) */}
-    {/* <div className="relative">
-      <div
-        className="p-10 rounded-2xl border relative overflow-hidden"
-        style={{ borderColor: C.border, background: `linear-gradient(135deg, ${C.bgGradStart}, ${C.bgGradEnd})` }}
-      >
-        <svg className="absolute inset-0 w-full h-full opacity-40" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
-          <ellipse cx="50" cy="50" rx="200" ry="160" fill="url(#aOrb2)" />
-        </svg>
-        <p className="text-5xl font-bold leading-none mb-6 relative z-10" style={{ color: C.primaryDark, opacity: 0.3 }}>"</p>
-        <p className="text-2xl font-bold leading-snug relative z-10" style={{ color: C.text }}>
-          Mindful commerce isn't a trend. It's the future of how we relate to things.
-        </p>
-        <div className="mt-8 flex items-center gap-3 relative z-10">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm"
-            style={{ background: `linear-gradient(135deg, ${C.primaryLight}, ${C.primary})` }}
-          >
-            A
-          </div>
-          <div>
-            <p className="text-sm font-semibold" style={{ color: C.text }}>Arya Mensah</p>
-            <p className="text-xs" style={{ color: C.textMuted }}>Founder, VebeKino</p>
+      <section className="py-20 px-6">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-1 gap-16 items-center">
+          <div className="text-center">
+            <p className="text-s tracking-[0.3em] uppercase font-semibold mb-3" style={{ color: C.primary }}>
+              Why We Exist
+            </p>
+            <h2 className="text-5xl font-bold mb-6 leading-tight" style={{ color: C.text }}>
+              Because not everything<br />you want, you need.
+            </h2>
+            <p className="text-lg leading-relaxed mb-4" style={{ color: C.textMuted }}>
+              Modern e-commerce is designed to make you buy impulsively — infinite scroll, countdown timers, manufactured urgency. We hated that. So we built the opposite.
+            </p>
+            <p className="text-lg leading-relaxed" style={{ color: C.textMuted }}>
+              VebeKino encourages you to think, wait, and then earn your purchase. Every product you add to your list is an intention. Every checkout is a decision you've made — not one that was made for you.
+            </p>
           </div>
         </div>
-      </div>
-    </div> */}
-  </div>
-</section>
+      </section>
 
       {/* ── VALUES ── */}
       <section className="py-20 px-6" style={{ backgroundColor: C.white }}>

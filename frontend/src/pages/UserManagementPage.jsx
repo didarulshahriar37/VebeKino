@@ -39,19 +39,7 @@ const C = {
   dangerBg:     "rgba(224,90,90,0.08)",
 };
 
-// ── Mock data ──────────────────────────────────────────────────────────────────
-const INITIAL_USERS = [
-  { id: 1,  name: "John Doe",       email: "john@gmail.com",    role: "user",  joined: "Jan 12, 2025", status: "active",   avatar: "JD" },
-  { id: 2,  name: "Sarah Smith",    email: "sarah@gmail.com",   role: "user",  joined: "Feb 03, 2025", status: "active",   avatar: "SS" },
-  { id: 3,  name: "Michael Lee",    email: "michael@gmail.com", role: "user",  joined: "Feb 20, 2025", status: "inactive", avatar: "ML" },
-  { id: 4,  name: "Emily Johnson",  email: "emily@gmail.com",   role: "admin", joined: "Mar 01, 2025", status: "active",   avatar: "EJ" },
-  { id: 5,  name: "David Brown",    email: "david@gmail.com",   role: "user",  joined: "Mar 15, 2025", status: "active",   avatar: "DB" },
-  { id: 6,  name: "Olivia Wilson",  email: "olivia@gmail.com",  role: "user",  joined: "Apr 02, 2025", status: "active",   avatar: "OW" },
-  { id: 7,  name: "James Taylor",   email: "james@gmail.com",   role: "user",  joined: "Apr 18, 2025", status: "inactive", avatar: "JT" },
-  { id: 8,  name: "Sophia Martinez",email: "sophia@gmail.com",  role: "admin", joined: "May 01, 2025", status: "active",   avatar: "SM" },
-  { id: 9,  name: "Liam Anderson",  email: "liam@gmail.com",    role: "user",  joined: "May 10, 2025", status: "active",   avatar: "LA" },
-  { id: 10, name: "Ava Thompson",   email: "ava@gmail.com",     role: "user",  joined: "May 16, 2025", status: "active",   avatar: "AT" },
-];
+import { useEffect } from "react";
 
 // ── Small helpers ──────────────────────────────────────────────────────────────
 const RoleBadge = ({ role }) => (
@@ -125,13 +113,32 @@ const ConfirmModal = ({ user, onConfirm, onCancel }) => (
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function UserManagementPage() {
-  const [users,       setUsers]       = useState(INITIAL_USERS);
+  const [users,       setUsers]       = useState([]);
+  const [loading,     setLoading]     = useState(true);
   const [search,      setSearch]      = useState("");
   const [roleFilter,  setRoleFilter]  = useState("all");   // "all" | "user" | "admin"
-  const [sortField,   setSortField]   = useState("id");
+  const [sortField,   setSortField]   = useState("name");
   const [sortDir,     setSortDir]     = useState("asc");
   const [toDelete,    setToDelete]    = useState(null);    // user object or null
   const [toast,       setToast]       = useState(null);    // { msg, type }
+
+  const fetchUsers = () => {
+    setLoading(true);
+    fetch('http://localhost:3000/admin/users')
+      .then(res => res.json())
+      .then(data => {
+        setUsers(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching users:", err);
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   // ── derived stats
   const totalAdmins   = users.filter((u) => u.role === "admin").length;
@@ -144,22 +151,25 @@ export default function UserManagementPage() {
   };
 
   // ── toggle role
-  const handleToggleRole = (id) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id ? { ...u, role: u.role === "admin" ? "user" : "admin" } : u
-      )
-    );
-    const user = users.find((u) => u.id === id);
-    const newRole = user.role === "admin" ? "User" : "Admin";
-    showToast(`${user.name} is now ${newRole}.`);
+  const handleToggleRole = (email) => {
+    fetch(`http://localhost:3000/admin/toggle-role/${email}`, { method: 'POST' })
+      .then(res => res.json())
+      .then(updatedUser => {
+        setUsers(prev => prev.map(u => u.email === email ? updatedUser : u));
+        showToast(`${updatedUser.name} is now ${updatedUser.role}.`);
+      })
+      .catch(err => showToast("Error updating role.", "danger"));
   };
 
   // ── delete
   const handleDelete = () => {
-    showToast(`${toDelete.name} has been removed.`, "danger");
-    setUsers((prev) => prev.filter((u) => u.id !== toDelete.id));
-    setToDelete(null);
+    fetch(`http://localhost:3000/admin/delete-user/${toDelete.email}`, { method: 'DELETE' })
+      .then(() => {
+        showToast(`${toDelete.name} has been removed.`, "danger");
+        setUsers((prev) => prev.filter((u) => u.email !== toDelete.email));
+        setToDelete(null);
+      })
+      .catch(err => showToast("Error deleting user.", "danger"));
   };
 
   // ── sort helper
@@ -190,6 +200,12 @@ export default function UserManagementPage() {
     });
     return list;
   }, [users, search, roleFilter, sortField, sortDir]);
+
+  if (loading) return (
+    <div className="min-h-[400px] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1c8079]"></div>
+    </div>
+  );
 
   return (
     <div style={{ fontFamily: "'DM Sans', 'Segoe UI', sans-serif" }}>
@@ -298,7 +314,7 @@ export default function UserManagementPage() {
             <thead>
               <tr style={{ backgroundColor: C.bg, borderBottom: `1px solid ${C.border}` }}>
                 {[
-                  { label: "#",      field: "id"     },
+                  { label: "#",      field: "_id"     },
                   { label: "User",   field: "name"   },
                   { label: "Email",  field: "email"  },
                   { label: "Role",   field: "role"   },
@@ -330,7 +346,7 @@ export default function UserManagementPage() {
               ) : (
                 displayed.map((user, idx) => (
                   <tr
-                    key={user.id}
+                    key={user.email}
                     style={{ borderBottom: `1px solid ${C.border}` }}
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = C.bg)}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
@@ -345,7 +361,7 @@ export default function UserManagementPage() {
                           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                           style={{ background: `linear-gradient(135deg, ${C.primaryLight}, ${C.primary})` }}
                         >
-                          {user.avatar}
+                          {user.name[0]}
                         </div>
                         <span className="font-semibold whitespace-nowrap" style={{ color: C.text }}>{user.name}</span>
                       </div>
@@ -358,17 +374,17 @@ export default function UserManagementPage() {
                     <td className="px-4 py-3.5"><RoleBadge role={user.role} /></td>
 
                     {/* Joined */}
-                    <td className="px-4 py-3.5 whitespace-nowrap" style={{ color: C.textMuted }}>{user.joined}</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap" style={{ color: C.textMuted }}>{new Date(user.createdAt || Date.now()).toLocaleDateString()}</td>
 
                     {/* Status */}
-                    <td className="px-4 py-3.5"><StatusDot status={user.status} /></td>
+                    <td className="px-4 py-3.5"><StatusDot status={user.is_locked ? "inactive" : "active"} /></td>
 
                     {/* Actions */}
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
                         {/* Toggle role button */}
                         <button
-                          onClick={() => handleToggleRole(user.id)}
+                          onClick={() => handleToggleRole(user.email)}
                           title={user.role === "admin" ? "Demote to User" : "Promote to Admin"}
                           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all"
                           style={{ borderColor: C.border, color: C.primary, backgroundColor: C.bg }}

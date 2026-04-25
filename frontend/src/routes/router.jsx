@@ -13,8 +13,6 @@ import OrdersPage from "../pages/OrdersPage";
 import UserManagementPage from "../pages/UserManagementPage";
 import AboutPage from "../pages/AboutPage";
 import ContactPage from "../pages/ContactPage";
-import UserDashboardPage from "../pages/UserDash";
-import AdminDashboardPage from "../pages/AdminDash";
 import CartPage from "../pages/CartPage";
 import QueuePage from "../pages/QueuePage";
 import ReviewPage from "../pages/ReviewPage";
@@ -27,11 +25,6 @@ export const router = createBrowserRouter([
     path: "/",
     Component: RootLayout,
     children: [
-      { index: true,                 Component: LandingPage          },
-      { path: "all-products",        Component: ProductsPage         },
-      { path: "product-details/:id", Component: ProductDetailsPage   },
-      { path: "about-us",            Component: AboutPage            },
-      { path: "contact",             Component: ContactPage          },
       {
         index: true,
         Component: LandingPage,

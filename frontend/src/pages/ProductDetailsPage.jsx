@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
+import SEO from "../components/Shared/SEO";
 import { 
   Star, 
   ShoppingCart, 
@@ -83,6 +84,10 @@ const ProductDetailsPage = () => {
 
   return (
     <div className="min-h-screen pt-28 pb-20 px-6" style={{ backgroundColor: C.bg }}>
+      <SEO 
+        title={product.name} 
+        description={product.description?.slice(0, 150) || `Buy ${product.name} at VebeKino. Experience mindful shopping with our AI-powered system.`} 
+      />
       <div className="max-w-7xl mx-auto">
         {/* Navigation */}
         <Link to="/all-products" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] mb-12 transition-all hover:translate-x-[-4px]" style={{ color: C.textMuted }}>

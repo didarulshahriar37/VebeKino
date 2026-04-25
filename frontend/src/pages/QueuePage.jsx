@@ -324,7 +324,7 @@ const QueuePage = () => {
                         className="bg-green-600 text-white px-12 py-5 rounded-3xl font-black uppercase tracking-widest text-lg flex items-center justify-center gap-2 hover:shadow-xl transition-all hover:-translate-y-1 whitespace-nowrap"
                         onClick={() => {
                           const totalAmount = gate5Items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-                          navigate('/checkout', { state: { amount: totalAmount } });
+                          navigate('/checkout', { state: { amount: totalAmount, items: gate5Items } });
                         }}
                       >
                         Checkout Now

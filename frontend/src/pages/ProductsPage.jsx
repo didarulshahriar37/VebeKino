@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
+import SEO from "../components/Shared/SEO";
 import { 
   Search, 
   Filter, 
@@ -84,7 +85,12 @@ const ProductsPage = () => {
   };
 
   return (
-    <div className="min-h-screen pt-20 pb-20" style={{ backgroundColor: C.bg }}>
+    <div className="min-h-screen pt-24 pb-20 px-4 md:px-8 max-w-7xl mx-auto" style={{ backgroundColor: C.bg }}>
+      <SEO 
+        title="Browse Products" 
+        description="Discover our curated collection of minimalist products. Each item is subject to our Anti-Impulse system to ensure you're making the right choice." 
+      />
+
       {/* ── Breadcrumb & Header ── */}
       <div className="max-w-7xl mx-auto px-6 mb-12">
         <nav className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold mb-4" style={{ color: C.textMuted }}>

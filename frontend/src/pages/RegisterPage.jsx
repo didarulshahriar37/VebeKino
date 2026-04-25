@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { ArrowLeft } from "lucide-react";
+import SEO from "../components/Shared/SEO";
 
 // Brand colors matching VebeKino homepage
 const C = {
@@ -178,7 +179,7 @@ export default function RegisterPage() {
       if (!res.ok) throw new Error(data.error || "Failed to verify OTP");
       
       login({ email: data.email, role: data.role, name: formData.fullName || data.name });
-      navigate(data.role === "admin" ? "/admin/dashboard" : "/user/dashboard");
+      navigate("/dashboard");
     } catch (err) {
       setGeneralError(err.message || "Verification failed.");
     } finally {
@@ -219,6 +220,10 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex">
+      <SEO 
+        title="Create Account" 
+        description="Join VebeKino today and start your journey towards more mindful shopping. Protect your wallet and the planet." 
+      />
       {/* Left decorative panel */}
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12"

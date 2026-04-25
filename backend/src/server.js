@@ -3,10 +3,14 @@ const cors = require('cors');
 require('dotenv').config();
 const connectDB = require('./db');
 
-// Connect to Database
-connectDB();
+// Initialize server
+(async () => {
+  // Connect to Database
+  await connectDB();
 
-require('./cron/queueCron');
+  // Load cron jobs after DB connects
+  require('./cron/queueCron');
+})();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +32,7 @@ const prosConsRoute    = require('./routes/generate-pros-cons');
 const cartRoute        = require('./routes/cart');
 const queueRoute       = require('./routes/queue');
 const paymentRoute     = require('./routes/payment');
+const ordersRoute      = require('./routes/orders');
 
 app.use('/signup',             signupRoute);
 app.use('/verify-otp',        verifyOtpRoute);
@@ -41,10 +46,15 @@ app.use('/products',          productsRoute);
 app.use('/cart',              cartRoute);
 app.use('/queue',             queueRoute);
 app.use('/payment',           paymentRoute);
+app.use('/orders',            ordersRoute);
 
 app.get('/', (req, res) => res.json({ status: 'Vebe Kino backend running on MongoDB' }));
 
-app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
-  console.log(`API URL: http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server started on port ${PORT}`);
+    console.log(`API URL: http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
