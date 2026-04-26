@@ -1,5 +1,6 @@
 const supabase = require('../services/supabase');
 const bcrypt = require('bcrypt');
+const { SAMPLE_PRODUCTS, getAllOrders } = require('../data/mockStore');
 
 // Admin login
 const adminLogin = async (req, res) => {
@@ -116,4 +117,45 @@ const getAccessLogs = async (req, res) => {
   }
 };
 
-module.exports = { adminLogin, getAllUsers, resetLock, setLockDuration, getAccessLogs }; 
+const getAdminStats = async (req, res) => {
+  try {
+    const allOrders = getAllOrders();
+    const totalOrders = allOrders.length;
+    const totalRevenue = allOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
+
+    let totalUsers = 0;
+    const { count } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true });
+    totalUsers = count || 0;
+
+    const recentOrders = allOrders
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5)
+      .map((order) => ({
+        id: order._id,
+        email: order.email,
+        amount: Number(order.totalAmount) || 0,
+        status: order.status || 'Pending',
+      }));
+
+    return res.status(200).json({
+      totalUsers,
+      totalProducts: SAMPLE_PRODUCTS.length,
+      totalOrders,
+      totalRevenue,
+      recentOrders,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = {
+  adminLogin,
+  getAllUsers,
+  resetLock,
+  setLockDuration,
+  getAccessLogs,
+  getAdminStats,
+};
